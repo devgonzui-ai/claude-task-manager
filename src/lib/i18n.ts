@@ -12,9 +12,15 @@ export class I18n {
   private messages: Messages = {};
   private currentLang: Language = 'en';
   private localesDir: string;
+  private initialized: boolean = false;
 
   private constructor() {
-    this.localesDir = path.join(__dirname, '../locales');
+    // In production, locales are in src/locales relative to package root
+    // In development, they are in src/locales relative to src
+    const isProd = __dirname.includes('dist');
+    this.localesDir = isProd 
+      ? path.join(__dirname, '../../src/locales')
+      : path.join(__dirname, '../locales');
   }
 
   static getInstance(): I18n {
@@ -29,6 +35,7 @@ export class I18n {
       this.currentLang = lang;
     }
     await this.loadMessages();
+    this.initialized = true;
   }
 
   private async loadMessages(): Promise<void> {
@@ -120,5 +127,10 @@ export class I18n {
     } catch {
       return ['en'];
     }
+  }
+
+  // Check if i18n is initialized
+  isInitialized(): boolean {
+    return this.initialized;
   }
 }

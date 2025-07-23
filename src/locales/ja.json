@@ -3,7 +3,8 @@
     "init": {
       "description": "現在のディレクトリでタスク管理を初期化",
       "success": "✅ タスクマネージャーを初期化しました",
-      "customCommand": "✅ Claude Code カスタムコマンド /task を作成しました"
+      "customCommand": "✅ Claude Code カスタムコマンド /task を作成しました",
+      "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました"
     },
     "new": {
       "description": "新しいタスクを作成",

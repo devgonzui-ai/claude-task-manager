@@ -1,5 +1,5 @@
 {
-  "name": "claude-task-manager",
+  "name": "@gonzui/claude-task-manager",
   "version": "1.0.0",
   "description": "Task management extension for Claude Code with archiving and history",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "productivity",
     "typescript"
   ],
-  "author": "Your Name",
+  "author": "gonzui",
   "license": "MIT",
   "dependencies": {
     "commander": "^11.0.0",
@@ -44,11 +44,9 @@
   },
   "files": [
     "dist/",
+    "src/locales/",
     "README.md",
+    "README.ja.md",
     "LICENSE"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/username/claude-task-manager.git"
-  }
+  ]
 }

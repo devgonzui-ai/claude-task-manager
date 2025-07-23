@@ -16,13 +16,13 @@ Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タ
 ## インストール
 
 ```bash
-npm install -g claude-task-manager
+npm install -g @gonzui/claude-task-manager
 ```
 
 または、プロジェクト内で使用:
 
 ```bash
-npm install claude-task-manager
+npm install @gonzui/claude-task-manager
 npx claude-task init
 ```
 
@@ -31,7 +31,7 @@ npx claude-task init
 TypeScript プロジェクトでプログラム的に使用:
 
 ```typescript
-import { TaskManager, TaskOptions } from "claude-task-manager";
+import { TaskManager, TaskOptions } from "@gonzui/claude-task-manager";
 
 const taskManager = new TaskManager("./my-project");
 await taskManager.init();
@@ -59,6 +59,15 @@ claude-task init
 - `task.md` - 現在のタスクファイル
 - `archive/` - 過去のタスクのアーカイブ
 - `.claude-tasks/` - 設定ファイル
+- `.claude/commands/task.md` - Claude Codeカスタムコマンド（`.claude/commands/`が存在する場合）
+- `.gitignore`の更新 - タスク関連ファイルを除外
+
+**Git風のディレクトリ動作**: 
+- コマンドを実行すると、Claude Task ManagerはGitが`.git`を探すように、上位ディレクトリの`.claude-tasks`ディレクトリを検索します
+- 見つかった場合、現在のディレクトリに関係なく、すべての操作はそのプロジェクトルートを使用します
+- 例: `/project`で`init`した後、`cd src/components && claude-task new`を実行しても、タスクは`/project/`に作成され、`/project/src/components/`には作成されません
+- これにより、プロジェクト全体で統一されたタスク管理が保証されます
+- サブディレクトリに別のタスク管理を作成する場合は、明示的にディレクトリを指定してください: `claude-task init .`
 
 ### 新しいタスクの作成
 
@@ -105,6 +114,34 @@ claude-task status
 ```bash
 claude-task claude "コードをリファクタリングしてください"
 ```
+
+## Claude Code カスタムコマンド
+
+`claude-task init`を実行すると、`.claude/commands/`ディレクトリがあるプロジェクトでは自動的にカスタム`/task`コマンドが作成されます。これにより、Claude Code内で以下のコマンドを直接使用できます：
+
+### 利用可能なコマンド
+
+- `/task new "タスク名" [--priority high|medium|low] [--tags tag1,tag2]` - 新しいタスクを作成
+- `/task status` - 現在のタスクステータスを確認
+- `/task run` - 現在のタスクを実行（task.mdの内容をClaude Codeが処理するために表示）
+- `/task history [--limit n]` - タスク履歴を表示
+- `/task archive` - 完了したタスクをアーカイブ
+
+### Claude Code内での使用例
+
+```
+/task new "ユーザー認証機能の実装" --priority high --tags auth,backend
+```
+
+```
+/task status
+```
+
+```
+/task run
+```
+
+カスタムコマンドファイルは、プロジェクトの言語設定（英語または日本語）に応じて自動的に生成されます。
 
 ## ファイル構造
 
@@ -277,7 +314,7 @@ MIT
 
 ## 貢献
 
-プルリクエストやイシューの報告を歓迎します！
+貢献を歓迎します！
 
 ## 更新履歴
 

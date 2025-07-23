@@ -1,6 +1,6 @@
 # Claude Task Manager
 
-[![npm version](https://badge.fury.io/js/claude-task-manager.svg)](https://badge.fury.io/js/claude-task-manager)
+[![npm version](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager.svg)](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [日本語版 README はこちら](./README.ja.md)
@@ -20,12 +20,12 @@ A powerful task management extension for Claude Code that automates task trackin
 
 ### Global Installation (Recommended)
 ```bash
-npm install -g claude-task-manager
+npm install -g @gonzui/claude-task-manager
 ```
 
 ### Local Installation
 ```bash
-npm install claude-task-manager
+npm install @gonzui/claude-task-manager
 ```
 
 ## Usage
@@ -40,6 +40,14 @@ This command:
 - Generates initial configuration
 - Creates a starter `task.md` file
 - If `.claude/commands/` exists, creates `/task` custom command
+- Updates `.gitignore` to exclude task-related files
+
+**Git-like Directory Behavior**: 
+- When you run any command, Claude Task Manager searches upward for a `.claude-tasks` directory (similar to how Git finds `.git`)
+- If found, all operations use that project root, regardless of your current directory
+- Example: If you `init` in `/project` and then `cd src/components && claude-task new`, the task will be created in `/project/`, NOT in `/project/src/components/`
+- This ensures centralized task management across your entire project
+- To create a separate task management in a subdirectory, explicitly specify the directory: `claude-task init .`
 
 ### Create New Task
 ```bash
@@ -81,13 +89,31 @@ claude-task claude "Review and optimize the database schema"
 ## Claude Code Integration
 
 ### Custom Command
-After running `claude-task init`, you can use these commands within Claude Code:
+After running `claude-task init` in a project with `.claude/commands/` directory, a custom `/task` command is automatically created. This allows you to use the following commands directly within Claude Code:
 
-- `/task new "Task name"` - Create a new task
-- `/task status` - Check current task status
-- `/task run` - Execute current task
-- `/task history` - View task history
+#### Available Commands
+
+- `/task new "Task name" [--priority high|medium|low] [--tags tag1,tag2]` - Create a new task
+- `/task status` - Check current task status  
+- `/task run` - Execute current task (displays task.md content for Claude Code to process)
+- `/task history [--limit n]` - View task history
 - `/task archive` - Archive completed task
+
+#### Examples within Claude Code
+
+```
+/task new "Implement user authentication" --priority high --tags auth,backend
+```
+
+```
+/task status
+```
+
+```
+/task run
+```
+
+The custom command file is automatically generated in the language configured in your project settings (English or Japanese).
 
 ### task.md Format
 ```markdown
@@ -118,7 +144,7 @@ Detailed task description
 ## Programmatic Usage
 
 ```typescript
-import { TaskManager } from 'claude-task-manager';
+import { TaskManager } from '@gonzui/claude-task-manager';
 
 const taskManager = new TaskManager('/path/to/project');
 
@@ -184,10 +210,6 @@ The language setting affects:
 ## Development
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/claude-task-manager.git
-cd claude-task-manager
-
 # Install dependencies
 npm install
 
@@ -207,14 +229,4 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Support
-
-If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/yourusername/claude-task-manager/issues).
+Contributions are welcome!

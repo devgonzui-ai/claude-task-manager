@@ -21,15 +21,60 @@ export class TaskManager {
   private config: ClaudeTaskManagerConfig;
   private i18n: I18n;
 
-  constructor(workingDir: string = process.cwd()) {
+  constructor(workingDir?: string) {
+    // If no directory specified, try to find project root with .claude-tasks
+    const baseDir = workingDir || this.findProjectRoot() || process.cwd();
+    
     this.config = {
-      workingDir,
-      taskFile: path.join(workingDir, 'task.md'),
-      archiveDir: path.join(workingDir, 'archive'),
-      configDir: path.join(workingDir, '.claude-tasks'),
-      configFile: path.join(workingDir, '.claude-tasks', 'config.json')
+      workingDir: baseDir,
+      taskFile: path.join(baseDir, 'task.md'),
+      archiveDir: path.join(baseDir, 'archive'),
+      configDir: path.join(baseDir, '.claude-tasks'),
+      configFile: path.join(baseDir, '.claude-tasks', 'config.json')
     };
     this.i18n = I18n.getInstance();
+    
+    // Initialize i18n with default language if not already initialized
+    // This ensures i18n is ready even if init() hasn't been called yet
+    if (!this.i18n.isInitialized()) {
+      this.i18n.init('en').catch(() => {
+        // Ignore initialization errors in constructor
+      });
+    }
+  }
+
+  /**
+   * Find the project root by looking for .claude-tasks directory
+   * Similar to how git finds .git directory
+   */
+  private findProjectRoot(): string | null {
+    let currentDir = process.cwd();
+    const root = path.parse(currentDir).root;
+
+    while (currentDir !== root) {
+      const configDir = path.join(currentDir, '.claude-tasks');
+      try {
+        if (fs.existsSync(configDir) && fs.statSync(configDir).isDirectory()) {
+          return currentDir;
+        }
+      } catch {
+        // Ignore errors and continue searching
+      }
+      
+      currentDir = path.dirname(currentDir);
+    }
+
+    // Check root directory as well
+    const rootConfigDir = path.join(root, '.claude-tasks');
+    try {
+      if (fs.existsSync(rootConfigDir) && fs.statSync(rootConfigDir).isDirectory()) {
+        return root;
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    return null;
   }
 
   async init(): Promise<void> {
@@ -62,6 +107,9 @@ export class TaskManager {
 
       // Create Claude Code custom command if .claude/commands directory exists
       await this.createClaudeCustomCommand();
+
+      // Update .gitignore
+      await this.updateGitignore();
     } catch (error) {
       throw new FileSystemError(
         this.i18n.t('errors.initFailed', { error: error instanceof Error ? error.message : 'Unknown error' }),
@@ -395,151 +443,6 @@ ${t.footer}
       
       // Generate custom command content based on current language
       const taskCommandContent = this.generateCustomCommandContent();
-
-## 使用方法
-
-\`/task <action> [options]\`
-
-## アクション
-
-### 新しいタスクを作成
-\`/task new "<タスク名>" [--priority high|medium|low] [--tags tag1,tag2]\`
-
-タスクを作成し、task.mdファイルに保存します。
-
-### 現在のタスクを確認
-\`/task status\`
-
-現在のタスクとその進捗状況を表示します。
-
-### タスクを実行
-\`/task run\`
-
-現在のタスクをClaude Codeで実行します。task.mdの内容がコンテキストとして使用されます。
-
-### タスク履歴
-\`/task history [--limit n]\`
-
-過去のタスクとアーカイブされたタスクを表示します。
-
-### タスクをアーカイブ
-\`/task archive\`
-
-完了したタスクをアーカイブフォルダに移動します。
-
-## 実装
-
-\`\`\`typescript
-import { TaskManager } from 'claude-task-manager';
-import * as path from 'path';
-
-async function executeTaskCommand(action: string, ...args: string[]) {
-  const taskManager = new TaskManager(process.cwd());
-  
-  try {
-    switch (action) {
-      case 'new': {
-        // パース引数
-        const title = args[0] || 'New Task';
-        let priority = 'medium';
-        let tags: string[] = [];
-        
-        for (let i = 1; i < args.length; i++) {
-          if (args[i] === '--priority' && args[i + 1]) {
-            priority = args[i + 1];
-            i++;
-          } else if (args[i] === '--tags' && args[i + 1]) {
-            tags = args[i + 1].split(',');
-            i++;
-          }
-        }
-        
-        await taskManager.createNewTask({ title, priority, tags });
-        console.log(\`✅ 新しいタスクを作成しました: \${title}\`);
-        break;
-      }
-      
-      case 'status': {
-        const status = await taskManager.getStatus();
-        console.log('📊 タスクステータス:');
-        console.log(\`現在のタスク: \${status.currentTask || 'なし'}\`);
-        console.log(\`アーカイブ済み: \${status.archivedCount}件\`);
-        console.log(\`最後の実行: \${status.lastRun || 'なし'}\`);
-        console.log(\`総実行回数: \${status.totalExecutions}\`);
-        break;
-      }
-      
-      case 'run': {
-        console.log('🚀 タスクを実行します...');
-        const taskContent = await taskManager.getTaskContent();
-        console.log('\\n現在のタスク内容:');
-        console.log(taskContent);
-        console.log('\\n上記のタスクに基づいて作業を開始してください。');
-        break;
-      }
-      
-      case 'history': {
-        const limit = parseInt(args.find(arg => arg.startsWith('--limit='))?.split('=')[1] || '10');
-        const history = await taskManager.getHistory(limit);
-        console.log('📜 タスク履歴:');
-        history.forEach(item => {
-          console.log(\`- \${item.date}: \${item.title}\`);
-        });
-        break;
-      }
-      
-      case 'archive': {
-        const archivedPath = await taskManager.archiveCurrentTask();
-        if (archivedPath) {
-          console.log(\`✅ タスクをアーカイブしました: \${path.basename(archivedPath)}\`);
-        } else {
-          console.log('⚠️  アーカイブするタスクがありません。');
-        }
-        break;
-      }
-      
-      default:
-        console.log('使用方法: /task <new|status|run|history|archive> [options]');
-        console.log('詳細は /task help を実行してください。');
-    }
-  } catch (error) {
-    console.error('❌ エラー:', error instanceof Error ? error.message : error);
-  }
-}
-
-// Claude Codeから呼び出される場合
-const args = process.argv.slice(2);
-if (args.length > 0) {
-  executeTaskCommand(args[0], ...args.slice(1));
-}
-\`\`\`
-
-## 使用例
-
-1. 新しいタスクを作成:
-   \`\`\`
-   /task new "ユーザー認証機能の実装" --priority high --tags auth,backend
-   \`\`\`
-
-2. 現在のタスクを確認:
-   \`\`\`
-   /task status
-   \`\`\`
-
-3. タスクを実行:
-   \`\`\`
-   /task run
-   \`\`\`
-
-4. タスク履歴を確認:
-   \`\`\`
-   /task history --limit 10
-   \`\`\`
-
-5. 完了したタスクをアーカイブ:
-   \`\`\`
-   /task archive
-   \`\`\``;
       
       await fs.writeFile(taskCommandPath, taskCommandContent);
       console.log(this.i18n.t('commands.init.customCommand'));
@@ -691,5 +594,79 @@ ${examples.items.join('\n\n')}`;
 
   async setLanguage(lang: Language): Promise<void> {
     await this.updateConfig({ language: lang });
+  }
+
+  private async updateGitignore(): Promise<void> {
+    const gitignorePath = path.join(this.config.workingDir, '.gitignore');
+    const entriesToAdd = [
+      '# Claude Task Manager',
+      'task.md',
+      'archive/',
+      '.claude-tasks/',
+      '',
+      '# Temporary task files',
+      '*.tmp.md',
+      'task.*.md',
+      '',
+      '# Claude Code custom commands (if you want to exclude them)',
+      '# .claude/commands/task.md'
+    ];
+
+    try {
+      let content = '';
+      let existingEntries: Set<string> = new Set();
+
+      // Read existing .gitignore if it exists
+      if (await fs.pathExists(gitignorePath)) {
+        content = await fs.readFile(gitignorePath, 'utf8');
+        // Parse existing entries (normalize by removing comments and whitespace)
+        existingEntries = new Set(
+          content.split('\n')
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'))
+        );
+      }
+
+      // Check if we need to add any entries
+      const newEntries: string[] = [];
+      let needsUpdate = false;
+
+      for (const entry of entriesToAdd) {
+        if (entry.startsWith('#') || entry === '') {
+          // Always add comments and empty lines for formatting
+          newEntries.push(entry);
+        } else if (!existingEntries.has(entry)) {
+          // Only add if not already present
+          newEntries.push(entry);
+          needsUpdate = true;
+        }
+      }
+
+      // Only update if there are new entries to add
+      if (needsUpdate) {
+        // Add a newline before our section if file exists and doesn't end with newline
+        if (content && !content.endsWith('\n')) {
+          content += '\n';
+        }
+        
+        // Add another newline if file has content to separate our section
+        if (content) {
+          content += '\n';
+        }
+
+        content += newEntries.join('\n');
+
+        // Ensure file ends with newline
+        if (!content.endsWith('\n')) {
+          content += '\n';
+        }
+
+        await fs.writeFile(gitignorePath, content);
+        console.log(this.i18n.t('commands.init.gitignoreUpdated') || '✅ Updated .gitignore with task-related entries');
+      }
+    } catch (error) {
+      // Don't fail init if .gitignore update fails
+      console.warn('Warning: Could not update .gitignore:', error);
+    }
   }
 }

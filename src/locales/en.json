@@ -3,7 +3,8 @@
     "init": {
       "description": "Initialize task management in current directory",
       "success": "✅ Task manager initialized successfully",
-      "customCommand": "✅ Created Claude Code custom command /task"
+      "customCommand": "✅ Created Claude Code custom command /task",
+      "gitignoreUpdated": "✅ Updated .gitignore with task-related entries"
     },
     "new": {
       "description": "Create a new task",
