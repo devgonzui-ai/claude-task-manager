@@ -230,3 +230,20 @@ MIT
 ## Contributing
 
 Contributions are welcome!
+
+## Changelog
+
+### v1.0.2 (2024-07-23)
+- Fix: Dynamic version reading from package.json for accurate version display
+
+### v1.0.1 (2024-07-23)
+- Fix: Create .claude/commands directory when .claude exists during init
+- Improved: Claude Code custom command generation
+
+### v1.0.0 (2024-07-23)
+- Initial release
+- Task management with archiving and history
+- Multi-language support (English/Japanese)
+- Git-like directory behavior for finding project root
+- Claude Code integration with custom commands
+- Automatic .gitignore updates

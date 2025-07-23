@@ -5,6 +5,13 @@ import chalk from 'chalk';
 import { TaskManager } from '../lib/TaskManager';
 import { TaskOptions, TaskManagerError, ClaudeExecutionError, FileSystemError } from '../types';
 import { I18n, Language } from '../lib/i18n';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Read version from package.json
+const packageJsonPath = path.join(__dirname, '../../package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+const version = packageJson.version;
 
 const program = new Command();
 const taskManager = new TaskManager();
@@ -23,7 +30,7 @@ async function initI18n() {
 program
   .name('claude-task')
   .description('Claude Code Task Manager')
-  .version('1.0.0')
+  .version(version)
   .hook('preAction', async () => {
     await initI18n();
   });
