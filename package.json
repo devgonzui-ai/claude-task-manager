@@ -1,0 +1,54 @@
+{
+  "name": "claude-task-manager",
+  "version": "1.0.0",
+  "description": "Task management extension for Claude Code with archiving and history",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "claude-task": "./dist/bin/claude-task.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/bin/claude-task.ts",
+    "test": "jest",
+    "prepublishOnly": "npm run build",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "task-management",
+    "ai",
+    "productivity",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "fs-extra": "^11.1.1",
+    "chalk": "^4.1.2",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/fs-extra": "^11.0.0",
+    "@types/jest": "^29.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/claude-task-manager.git"
+  }
+}

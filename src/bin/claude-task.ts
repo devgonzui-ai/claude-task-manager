@@ -1,0 +1,257 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import chalk from 'chalk';
+import { TaskManager } from '../lib/TaskManager';
+import { TaskOptions, TaskManagerError, ClaudeExecutionError, FileSystemError } from '../types';
+import { I18n, Language } from '../lib/i18n';
+
+const program = new Command();
+const taskManager = new TaskManager();
+const i18n = I18n.getInstance();
+
+// Initialize i18n with system or config language
+async function initI18n() {
+  try {
+    const lang = await taskManager.getLanguage();
+    await i18n.init(lang);
+  } catch {
+    await i18n.init('en');
+  }
+}
+
+program
+  .name('claude-task')
+  .description('Claude Code Task Manager')
+  .version('1.0.0')
+  .hook('preAction', async () => {
+    await initI18n();
+  });
+
+program
+  .command('init')
+  .description(i18n.t('commands.init.description'))
+  .action(async () => {
+    try {
+      await taskManager.init();
+      console.log(chalk.green(i18n.t('commands.init.success')));
+      console.log(chalk.gray('  Created: task.md, archive/, .claude-tasks/'));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('new [title]')
+  .description(i18n.t('commands.new.description'))
+  .option('-d, --description <description>', 'Task description')
+  .option('-p, --priority <priority>', 'Task priority (low, medium, high)', 'medium')
+  .option('--tags <tags>', 'Task tags (comma-separated)')
+  .action(async (title, options) => {
+    try {
+      const taskOptions: TaskOptions = {
+        title: title || options.title,
+        description: options.description,
+        priority: options.priority as 'low' | 'medium' | 'high',
+        tags: options.tags ? options.tags.split(',').map((tag: string) => tag.trim()) : undefined
+      };
+
+      const taskFile = await taskManager.createNewTask(taskOptions);
+      console.log(chalk.green(i18n.t('commands.new.success', { title: taskOptions.title || 'New Task' })));
+      if (taskOptions.title) {
+        console.log(chalk.blue(i18n.t('commands.new.archiving')));
+      }
+      
+      if (taskOptions.priority && taskOptions.priority !== 'medium') {
+        console.log(chalk.yellow(`  Priority: ${taskOptions.priority.toUpperCase()}`));
+      }
+      
+      if (taskOptions.tags && taskOptions.tags.length > 0) {
+        console.log(chalk.cyan(`  Tags: ${taskOptions.tags.join(', ')}`));
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('run')
+  .description(i18n.t('commands.run.description'))
+  .option('-v, --verbose', 'Verbose output')
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue(i18n.t('commands.run.starting')));
+      const startTime = Date.now();
+      
+      const result = await taskManager.runTask(options.verbose);
+      const duration = Date.now() - startTime;
+      
+      if (result.success) {
+        console.log(chalk.green(i18n.t('commands.run.success')));
+        if (options.verbose && result.output) {
+          console.log(chalk.gray('Output:'));
+          console.log(result.output);
+        }
+      } else {
+        console.log(chalk.red(i18n.t('commands.run.error', { error: result.error || 'Unknown error' })));
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('history')
+  .description(i18n.t('commands.history.description'))
+  .option('-l, --limit <number>', 'Limit number of results', '10')
+  .option('--size', 'Show file sizes')
+  .action(async (options) => {
+    try {
+      const history = await taskManager.getHistory(parseInt(options.limit));
+      
+      if (history.length === 0) {
+        console.log(chalk.yellow(i18n.t('commands.history.empty')));
+        return;
+      }
+
+      console.log(chalk.blue(i18n.t('commands.history.title')));
+      history.forEach((task) => {
+        const sizeInfo = options.size && task.size ? ` (${formatBytes(task.size)})` : '';
+        console.log(i18n.t('commands.history.item', { date: task.date, title: task.title }) + chalk.gray(sizeInfo));
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('status')
+  .description(i18n.t('commands.status.description'))
+  .action(async () => {
+    try {
+      const status = await taskManager.getStatus();
+      console.log(chalk.blue(i18n.t('commands.status.title')));
+      console.log(status.currentTask 
+        ? i18n.t('commands.status.currentTask', { task: chalk.yellow(status.currentTask) })
+        : i18n.t('commands.status.noCurrentTask'));
+      
+      if (status.currentTaskSize) {
+        console.log(`Task file size: ${chalk.gray(formatBytes(status.currentTaskSize))}`);
+      }
+      
+      console.log(i18n.t('commands.status.archivedCount', { count: chalk.green(status.archivedCount.toString()) }));
+      console.log(i18n.t('commands.status.totalExecutions', { count: chalk.cyan(status.totalExecutions.toString()) }));
+      console.log(status.lastRun 
+        ? i18n.t('commands.status.lastRun', { time: chalk.gray(status.lastRun) })
+        : i18n.t('commands.status.noLastRun'));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('config')
+  .description('Show or update configuration')
+  .option('--set-template <file>', 'Set custom task template from file')
+  .option('--set-claude-cmd <command>', 'Set Claude Code command')
+  .action(async (options) => {
+    try {
+      if (options.setTemplate) {
+        // Implementation for setting template
+        console.log(chalk.blue('🔧 Template configuration feature coming soon...'));
+      } else if (options.setClaudeCmd) {
+        // Implementation for setting Claude command
+        console.log(chalk.blue('🔧 Claude command configuration feature coming soon...'));
+      } else {
+        // Show current config
+        console.log(chalk.blue('🔧 Configuration display feature coming soon...'));
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('claude <prompt>')
+  .description(i18n.t('commands.claude.description'))
+  .action(async (prompt: string) => {
+    try {
+      console.log(chalk.blue(i18n.t('commands.run.starting')));
+      // This would need to be implemented in TaskManager
+      console.log(chalk.yellow('Direct Claude execution feature coming soon...'));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('lang [language]')
+  .description(i18n.t('commands.lang.description'))
+  .action(async (language?: string) => {
+    try {
+      if (!language) {
+        const currentLang = await taskManager.getLanguage();
+        console.log(i18n.t('commands.lang.current', { lang: currentLang }));
+        return;
+      }
+      
+      if (language !== 'en' && language !== 'ja') {
+        console.log(chalk.red(i18n.t('commands.lang.invalid')));
+        return;
+      }
+      
+      await taskManager.setLanguage(language as Language);
+      await i18n.init(language as Language);
+      console.log(chalk.green(i18n.t('commands.lang.changed', { lang: language })));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+// Error handling function
+function handleError(error: unknown): void {
+  if (error instanceof ClaudeExecutionError) {
+    console.error(chalk.red('Claude Execution Error:'), error.message);
+    if (error.stderr) {
+      console.error(chalk.gray('Claude stderr:'), error.stderr);
+    }
+    if (error.exitCode) {
+      console.error(chalk.gray('Exit code:'), error.exitCode);
+    }
+  } else if (error instanceof FileSystemError) {
+    console.error(chalk.red('File System Error:'), error.message);
+    console.error(chalk.gray('Path:'), error.details?.path);
+    console.error(chalk.gray('Operation:'), error.details?.operation);
+  } else if (error instanceof TaskManagerError) {
+    console.error(chalk.red('Task Manager Error:'), error.message);
+    console.error(chalk.gray('Code:'), error.code);
+  } else if (error instanceof Error) {
+    console.error(chalk.red('Error:'), error.message);
+  } else {
+    console.error(chalk.red('Unknown error occurred'));
+  }
+  process.exit(1);
+}
+
+// Utility function to format bytes
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Handle unknown commands
+program.on('command:*', () => {
+  console.error(chalk.red('Invalid command. See --help for available commands.'));
+  process.exit(1);
+});
+
+// Parse command line arguments
+program.parse();
+
+// Show help if no command provided
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
+}

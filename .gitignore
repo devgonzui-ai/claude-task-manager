@@ -1,0 +1,20 @@
+gitignore# Claude personal workspace
+.claude/
+.claude-history/
+
+# Task manager working files (if using own tool)
+task.md
+archive/
+.claude-tasks/
+
+# OS and Editor
+.DS_Store
+.vscode/
+*.swp
+*.swo
+
+# Node
+node_modules/
+npm-debug.log*
+dist/
+coverage/
