@@ -543,9 +543,11 @@ async function executeTaskCommand(action: string, ...args: string[]) {
       case 'run': {
         console.log('🚀 Executing task...');
         const taskContent = await taskManager.getTaskContent();
-        console.log('\\nCurrent task content:');
+        console.log('\\n=== TASK.MD CONTENT START ===');
         console.log(taskContent);
-        console.log('\\nPlease start working based on the above task.');
+        console.log('=== TASK.MD CONTENT END ===\\n');
+        console.log('📋 Please work on the task defined in the task.md file above.');
+        console.log('💡 Note: Focus only on the content between the markers above.');
         break;
       }
       

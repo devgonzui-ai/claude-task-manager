@@ -1,5 +1,7 @@
 # Claude Task Manager
 
+English version: After installation, see `node_modules/@gonzui/claude-task-manager/README.md`
+
 Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タスクの作成、実行、履歴管理を自動化します。
 
 ## 特徴
