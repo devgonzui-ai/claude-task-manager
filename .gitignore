@@ -18,3 +18,12 @@ node_modules/
 npm-debug.log*
 dist/
 coverage/
+
+# Claude Task Manager
+
+# Temporary task files
+*.tmp.md
+task.*.md
+
+# Claude Code custom commands (if you want to exclude them)
+# .claude/commands/task.md

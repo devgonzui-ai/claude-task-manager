@@ -435,17 +435,26 @@ ${t.footer}
   }
 
   private async createClaudeCustomCommand(): Promise<void> {
-    const claudeCommandsDir = path.join(this.config.workingDir, '.claude', 'commands');
+    const claudeDir = path.join(this.config.workingDir, '.claude');
+    const claudeCommandsDir = path.join(claudeDir, 'commands');
     
-    // Check if .claude/commands directory exists
-    if (await fs.pathExists(claudeCommandsDir)) {
-      const taskCommandPath = path.join(claudeCommandsDir, 'task.md');
-      
-      // Generate custom command content based on current language
-      const taskCommandContent = this.generateCustomCommandContent();
-      
-      await fs.writeFile(taskCommandPath, taskCommandContent);
-      console.log(this.i18n.t('commands.init.customCommand'));
+    try {
+      // Check if .claude directory exists
+      if (await fs.pathExists(claudeDir)) {
+        // Create commands directory inside existing .claude directory
+        await fs.ensureDir(claudeCommandsDir);
+        
+        const taskCommandPath = path.join(claudeCommandsDir, 'task.md');
+        
+        // Generate custom command content based on current language
+        const taskCommandContent = this.generateCustomCommandContent();
+        
+        await fs.writeFile(taskCommandPath, taskCommandContent);
+        console.log(this.i18n.t('commands.init.customCommand'));
+      }
+    } catch (error) {
+      // If we can't create the custom command, just log a warning and continue
+      console.warn('Could not create Claude custom command:', error);
     }
   }
 
