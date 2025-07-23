@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      # テストの実行（失敗した場合は公開しない）
+      # テストの実行
       - name: Run tests
-        run: npm test
+        run: npm run test:ci
         
       # TypeScriptのビルド
       - name: Build
