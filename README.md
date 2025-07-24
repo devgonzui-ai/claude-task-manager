@@ -76,6 +76,10 @@ claude-task run
 
 Executes the current task using Claude Code with `task.md` content as context.
 
+Options:
+- `-v, --verbose`: Show verbose output
+- `-d, --debug`: Show debug information (command, file path, prompt)
+
 ### View Task History
 ```bash
 claude-task history --limit 10
@@ -174,7 +178,7 @@ Configuration is stored in `.claude-tasks/config.json`:
 {
   "created": "2024-01-15T10:00:00.000Z",
   "taskTemplate": "...",
-  "claudeCommand": "claude code",
+  "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
   "archiveDir": "archive",
   "language": "en"
@@ -232,6 +236,13 @@ MIT
 Contributions are welcome!
 
 ## Changelog
+
+### v1.0.5 (2024-07-24)
+- Feature: Fix `claude-task run` command to properly execute tasks
+- Feature: Add `--debug` flag to show detailed execution information
+- Feature: Change from absolute to relative path in Claude prompts
+- Fix: Update default claude command from 'claude code' to 'claude'
+- Improved: Use `--print` flag for non-interactive Claude execution
 
 ### v1.0.2 (2024-07-23)
 - Fix: Dynamic version reading from package.json for accurate version display

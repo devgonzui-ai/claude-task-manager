@@ -91,6 +91,9 @@ claude-task run
 
 # 詳細出力付き
 claude-task run -v
+
+# デバッグ情報付き（コマンド、ファイルパス、プロンプトを表示）
+claude-task run -d
 ```
 
 ### 履歴の確認
@@ -239,7 +242,7 @@ interface TaskStatus {
 {
   "created": "2024-01-15T10:00:00.000Z",
   "taskTemplate": "...",
-  "claudeCommand": "claude code",
+  "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
   "archiveDir": "archive",
   "language": "ja"
@@ -280,7 +283,7 @@ claude-task lang en
 ### 設定項目
 
 - `taskTemplate`: 新しいタスクファイルのテンプレート
-- `claudeCommand`: Claude Code の実行コマンド（デフォルト: "claude code"）
+- `claudeCommand`: Claude Code の実行コマンド（デフォルト: "claude"）
 
 ## テンプレート変数
 
@@ -319,6 +322,13 @@ MIT
 貢献を歓迎します！
 
 ## 更新履歴
+
+### v1.0.5 (2024-07-24)
+- 機能: `claude-task run`コマンドがタスクを正しく実行するように修正
+- 機能: `--debug`フラグを追加（詳細な実行情報を表示）
+- 機能: Claudeへのプロンプトで絶対パスから相対パスに変更
+- 修正: デフォルトのclaudeコマンドを'claude code'から'claude'に更新
+- 改善: 非インタラクティブ実行のために`--print`フラグを使用
 
 ### v1.0.2 (2024-07-23)
 - 修正: package.jsonから動的にバージョンを読み込むように変更（正確なバージョン表示）

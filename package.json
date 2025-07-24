@@ -1,6 +1,6 @@
 {
   "name": "@gonzui/claude-task-manager",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Task management extension for Claude Code with archiving and history",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
