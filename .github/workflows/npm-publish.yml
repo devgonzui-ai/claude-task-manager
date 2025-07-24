@@ -1,13 +1,11 @@
 name: Publish to npm
 
-# このワークフローは以下のタイミングで実行されます：
-# 1. mainブランチへのpush時（自動）
-# 2. GitHub Actions UIからの手動実行時
+# このワークフローはタグがpushされた時に実行されます
+# 例: git tag v1.0.0 && git push origin v1.0.0
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:  # 手動実行を許可
+    tags:
+      - 'v*'  # v1.0.0, v2.1.0 などのタグにマッチ
 
 jobs:
   publish:
@@ -37,37 +35,41 @@ jobs:
       - name: Build
         run: npm run build
         
-      # バージョンが既に公開されているかチェック
-      - name: Check if version changed
-        id: version_check
+      # タグとpackage.jsonのバージョンが一致しているか確認
+      - name: Verify version match
         run: |
-          # package.jsonから現在のバージョンを取得
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          # タグからバージョンを取得（v1.0.0 -> 1.0.0）
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
           
-          # npmに同じバージョンが既に存在するかチェック
-          if npm view @gonzui/claude-task-manager@$CURRENT_VERSION version 2>/dev/null; then
-            echo "Version $CURRENT_VERSION already exists on npm"
-            echo "SHOULD_PUBLISH=false" >> $GITHUB_OUTPUT
-          else
-            echo "Version $CURRENT_VERSION not found on npm, will publish"
-            echo "SHOULD_PUBLISH=true" >> $GITHUB_OUTPUT
+          # package.jsonのバージョンを取得
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          # バージョンが一致しているか確認
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Error: Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
+            echo "Please ensure the tag matches the version in package.json"
+            exit 1
           fi
           
-      # npmへの公開（新しいバージョンの場合のみ）
+          echo "Version check passed: $TAG_VERSION"
+          
+      # npmへの公開
       # 注意: NPM_TOKEN をGitHub Secretsに設定する必要があります
       - name: Publish to npm
-        if: steps.version_check.outputs.SHOULD_PUBLISH == 'true'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
-      # Gitタグの作成（公開成功時のみ）
-      - name: Create Git tag
-        if: steps.version_check.outputs.SHOULD_PUBLISH == 'true'
-        run: |
-          VERSION=${{ steps.version_check.outputs.CURRENT_VERSION }}
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
+      # リリースノートの作成（オプション）
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release:
+            - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details
+          draft: false
+          prerelease: false
