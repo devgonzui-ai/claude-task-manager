@@ -39,7 +39,7 @@ describe('TaskManager', () => {
       expect(config).toHaveProperty('created');
       expect(config).toHaveProperty('taskTemplate');
       expect(config).toHaveProperty('claudeCommand');
-      expect(config.claudeCommand).toBe('claude code');
+      expect(config.claudeCommand).toBe('claude');
     });
   });
 
