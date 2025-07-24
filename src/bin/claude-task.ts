@@ -85,12 +85,13 @@ program
   .command('run')
   .description(i18n.t('commands.run.description'))
   .option('-v, --verbose', 'Verbose output')
+  .option('-d, --debug', 'Debug output')
   .action(async (options) => {
     try {
       console.log(chalk.blue(i18n.t('commands.run.starting')));
       const startTime = Date.now();
       
-      const result = await taskManager.runTask(options.verbose);
+      const result = await taskManager.runTask(options.verbose, options.debug);
       const duration = Date.now() - startTime;
       
       if (result.success) {
@@ -186,6 +187,42 @@ program
       console.log(chalk.blue(i18n.t('commands.run.starting')));
       // This would need to be implemented in TaskManager
       console.log(chalk.yellow('Direct Claude execution feature coming soon...'));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('claude [prompt...]')
+  .description('Execute Claude Code with optional prompt')
+  .action(async (promptParts: string[]) => {
+    try {
+      const prompt = promptParts.join(' ');
+      
+      if (!prompt) {
+        // No prompt provided, just show task content
+        console.log(chalk.blue('📋 Executing task with Claude Code...'));
+        const taskContent = await taskManager.getTaskContent();
+        console.log('\n' + taskContent);
+        console.log('\n💡 Please use the task content above in Claude Code.');
+      } else {
+        // Prompt provided, execute with task context
+        console.log(chalk.blue('🚀 Executing Claude Code with prompt...'));
+        const taskContent = await taskManager.getTaskContent();
+        console.log('\n=== TASK CONTEXT ===');
+        console.log(taskContent);
+        console.log('=== END TASK CONTEXT ===\n');
+        console.log('📝 Your prompt:', chalk.yellow(prompt));
+        console.log('\n💡 Please execute the above prompt with the task context in Claude Code.');
+      }
+      
+      // Update execution count
+      await taskManager.recordExecution({
+        success: true,
+        output: 'Claude Code execution initiated',
+        timestamp: new Date().toISOString(),
+        duration: 0
+      });
     } catch (error) {
       handleError(error);
     }

@@ -1,7 +1,9 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as os from 'os';
 import { format } from 'date-fns';
 import { spawn, SpawnOptionsWithStdioTuple, StdioOptions } from 'child_process';
+import chalk from 'chalk';
 import {
   TaskConfig,
   TaskOptions,
@@ -88,7 +90,7 @@ export class TaskManager {
         const defaultConfig: TaskConfig = {
           created: new Date().toISOString(),
           taskTemplate: this.getDefaultTaskTemplate(),
-          claudeCommand: 'claude code',
+          claudeCommand: 'claude',
           defaultTaskTitle: 'New Task',
           archiveDir: 'archive',
           language: 'en'
@@ -186,7 +188,7 @@ export class TaskManager {
     }
   }
 
-  async runTask(verbose: boolean = false): Promise<ExecutionResult> {
+  async runTask(verbose: boolean = false, debug: boolean = false): Promise<ExecutionResult> {
     if (!await fs.pathExists(this.config.taskFile)) {
       throw new TaskManagerError('No task.md file found. Run "claude-task new" first.', 'NO_TASK_FILE');
     }
@@ -197,11 +199,36 @@ export class TaskManager {
       const config = await this.getConfig();
       const taskContent = await fs.readFile(this.config.taskFile, 'utf8');
 
-      // Execute Claude Code with task content
-      const claudeCommand = config.claudeCommand || 'claude code';
-      const prompt = `Execute the following task:\n\n${taskContent}`;
-
-      const result = await this.executeClaude(prompt, claudeCommand);
+      // Execute Claude with task content
+      const claudeCommand = config.claudeCommand || 'claude';
+      console.log(`\n🚀 Executing task with ${claudeCommand}...`);
+      
+      // Get relative path for display and prompt
+      const taskPath = path.resolve(this.config.taskFile);
+      const relativePath = path.relative(process.cwd(), taskPath);
+      
+      // Create prompt with @task.md reference and exit instruction
+      const prompt = `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`;
+      
+      // Show task file being executed
+      console.log(chalk.gray(`📄 Task file: ${relativePath}`));
+      
+      // Debug output
+      if (debug) {
+        console.log(chalk.gray(`🔍 Command: ${claudeCommand}`));
+        console.log(chalk.gray(`🔍 Full path: ${taskPath}`));
+        console.log(chalk.gray(`🔍 Prompt: ${prompt}`));
+      }
+      
+      let result: string;
+      try {
+        // Execute Claude with the prompt
+        result = await this.executeClaude(prompt, claudeCommand);
+        console.log(chalk.green('\n✅ Claude Code execution completed'));
+      } catch (error) {
+        console.error(chalk.red('\n❌ Claude Code execution failed'));
+        throw error;
+      }
       const duration = Date.now() - startTime;
 
       const executionResult: ExecutionResult = {
@@ -230,33 +257,23 @@ export class TaskManager {
     }
   }
 
-  private async executeClaude(prompt: string, claudeCommand: string = 'claude code'): Promise<string> {
+  private async executeClaude(prompt: string, claudeCommand: string = 'claude'): Promise<string> {
     return new Promise((resolve, reject) => {
-      const [command, ...args] = claudeCommand.split(' ');
-      const claudeProcess = spawn(command, [...args, prompt], {
-        stdio: ['pipe', 'pipe', 'pipe'] as StdioOptions,
-        shell: true
-      });
-
-      let output = '';
-      let errorOutput = '';
-
-      claudeProcess.stdout?.on('data', (data: Buffer) => {
-        output += data.toString();
-      });
-
-      claudeProcess.stderr?.on('data', (data: Buffer) => {
-        errorOutput += data.toString();
+      // Execute claude with the prompt in non-interactive mode
+      // Use 'inherit' to allow Claude to show output in the terminal
+      // Use --print flag to exit after completing the task
+      const claudeProcess = spawn(claudeCommand, ['--print', prompt], {
+        stdio: 'inherit',
+        shell: false
       });
 
       claudeProcess.on('close', (code: number | null) => {
         if (code === 0) {
-          resolve(output);
+          resolve('Claude Code execution completed');
         } else {
           reject(new ClaudeExecutionError(
             `Claude Code failed with exit code ${code}`,
-            code || undefined,
-            errorOutput
+            code || undefined
           ));
         }
       });
@@ -267,6 +284,10 @@ export class TaskManager {
         ));
       });
     });
+  }
+
+  async recordExecution(result: ExecutionResult): Promise<void> {
+    await this.logExecution(result);
   }
 
   private async logExecution(result: ExecutionResult): Promise<void> {
@@ -428,7 +449,7 @@ ${t.footer}
       return {
         created: new Date().toISOString(),
         taskTemplate: this.getDefaultTaskTemplate(),
-        claudeCommand: 'claude code'
+        claudeCommand: 'claude'
       };
     } catch (error) {
       throw new FileSystemError(

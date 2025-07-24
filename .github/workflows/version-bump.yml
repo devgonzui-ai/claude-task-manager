@@ -21,11 +21,11 @@ jobs:
     
     steps:
       # リポジトリのチェックアウト
-      # デフォルトのGITHUB_TOKENを使用（push権限あり）
+      # 注意: プライベートリポジトリの場合、PAT_TOKEN が必要
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           
       # Node.js環境のセットアップ
       - name: Setup Node.js

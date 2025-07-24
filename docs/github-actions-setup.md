@@ -15,6 +15,7 @@
 
 ### 2. GitHub Secrets の設定
 
+#### NPM_TOKEN（必須）
 1. GitHubリポジトリの「Settings」タブを開く
 2. 左側メニューの「Secrets and variables」→「Actions」を選択
 3. 「New repository secret」をクリック
@@ -22,6 +23,17 @@
    - Name: `NPM_TOKEN`
    - Secret: コピーしたnpmアクセストークン
 5. 「Add secret」をクリック
+
+#### PAT_TOKEN（プライベートリポジトリの場合は必須）
+1. GitHub の個人設定から「Developer settings」→「Personal access tokens」→「Tokens (classic)」を選択
+2. 「Generate new token」→「Generate new token (classic)」をクリック
+3. 以下の権限を選択：
+   - `repo`（全権限）
+   - `workflow`（GitHub Actions の書き込み権限）
+4. トークンを生成してコピー
+5. リポジトリの Secrets に追加：
+   - Name: `PAT_TOKEN`
+   - Secret: コピーしたPersonal Access Token
 
 ### 3. ワークフローの動作
 
