@@ -123,6 +123,16 @@ export class TaskManager {
 
   async createNewTask(options: TaskOptions = {}): Promise<string> {
     try {
+      // Ensure i18n is initialized with project config
+      if (!this.i18n.isInitialized()) {
+        try {
+          const config = await this.getConfig();
+          await this.i18n.init(config.language || 'en');
+        } catch {
+          await this.i18n.init('en');
+        }
+      }
+      
       // Archive current task if it exists
       if (await fs.pathExists(this.config.taskFile)) {
         await this.archiveCurrentTask();
@@ -157,6 +167,11 @@ export class TaskManager {
     Object.entries(variables).forEach(([key, value]) => {
       content = content.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
+    
+    // Replace {{TASKS}} with default task list if not already replaced
+    if (content.includes('{{TASKS}}')) {
+      content = content.replace(/{{TASKS}}/g, '- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3');
+    }
 
     await fs.writeFile(this.config.taskFile, content);
   }
@@ -400,6 +415,10 @@ export class TaskManager {
   private getDefaultTaskTemplate(): string {
     try {
       const t = this.i18n.getNamespace('taskTemplate');
+      // Check if namespace is properly loaded
+      if (!t || !t.title) {
+        throw new Error('i18n taskTemplate namespace not loaded');
+      }
       return `${t.title}
 
 ${t.created}  
