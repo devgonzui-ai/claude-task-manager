@@ -52,7 +52,7 @@ describe('Run Command Tests', () => {
     const relativePath = path.relative(process.cwd(), path.resolve(tempDir, 'task.md'));
     expect(mockSpawn).toHaveBeenCalledWith(
       'claude',
-      ['--print', `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`],
+      ['--dangerously-skip-permissions', '--print', `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`],
       {
         stdio: 'inherit',
         shell: false
@@ -83,7 +83,7 @@ describe('Run Command Tests', () => {
     const expectedPrompt = `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`;
     expect(mockSpawn).toHaveBeenCalledWith(
       'claude',
-      ['--print', expectedPrompt],
+      ['--dangerously-skip-permissions', '--print', expectedPrompt],
       expect.any(Object)
     );
 

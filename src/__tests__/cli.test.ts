@@ -127,24 +127,30 @@ describe('Claude Task CLI', () => {
       
       const taskContent = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
       expect(taskContent).toContain('# Priority Task');
-      expect(taskContent).toContain('**Priority:** high');
-      expect(taskContent).toContain('**Tags:** important, urgent');
+      // Check for priority and tags in either language
+      expect(taskContent).toMatch(/\*\*(Priority|優先度):\*\* high/);
+      expect(taskContent).toMatch(/\*\*(Tags|タグ):\*\* important, urgent/);
     });
 
     it('should archive existing task when creating new one', async () => {
-      // Create first task
+      // Create first task (this will archive the initial task created by init)
       await runCLI(['new', 'First Task'], tempDir);
+      
+      // Check initial state of archive
+      const archiveFilesBefore = await fs.readdir(path.join(tempDir, 'archive'));
+      const initialArchiveCount = archiveFilesBefore.length;
       
       // Create second task
       const result = await runCLI(['new', 'Second Task'], tempDir);
       
       expect(result.code).toBe(0);
-      expect(result.stdout).toContain('Archiving');
+      // Check for archiving message in either language
+      expect(result.stdout).toMatch(/Archiving|アーカイブ/);
       
-      // Check archive directory
-      const archiveFiles = await fs.readdir(path.join(tempDir, 'archive'));
-      expect(archiveFiles.length).toBe(1);
-      expect(archiveFiles[0]).toMatch(/_task\.md$/);
+      // Check archive directory - should have one more file than before
+      const archiveFilesAfter = await fs.readdir(path.join(tempDir, 'archive'));
+      expect(archiveFilesAfter.length).toBe(initialArchiveCount + 1);
+      expect(archiveFilesAfter[archiveFilesAfter.length - 1]).toMatch(/-\d{3}_task\.md$/);
     });
   });
 
@@ -217,7 +223,8 @@ describe('Claude Task CLI', () => {
       
       expect(result.code).toBe(0);
       expect(result.stdout).toMatch(/Current language:|現在の言語:/);
-      expect(result.stdout).toContain('en');
+      // Language could be 'en' or 'ja' depending on environment
+      expect(result.stdout).toMatch(/\b(en|ja)\b/);
     });
 
     it('should change language to Japanese', async () => {

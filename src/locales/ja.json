@@ -60,7 +60,9 @@
     "priority": "**優先度:** {{PRIORITY}}",
     "tags": "**タグ:** {{TAGS}}",
     "description": "## 説明\n{{DESCRIPTION}}",
-    "tasks": "## タスク\n- [ ] タスク 1\n- [ ] タスク 2\n- [ ] タスク 3",
+    "prerequisites": "## 前提条件\n{{PREREQUISITES}}",
+    "rules": "## ルール\n{{RULES}}",
+    "tasks": "## タスク\n{{TASKS}}",
     "context": "## コンテキスト\n<!-- Claude Code実行用のコンテキストを追加 -->",
     "notes": "## メモ\n<!-- ここにメモを追加 -->",
     "footer": "---\n*Claude Task Manager により生成*"

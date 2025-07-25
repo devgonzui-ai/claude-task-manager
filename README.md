@@ -79,6 +79,9 @@ Executes the current task using Claude Code with `task.md` content as context.
 Options:
 - `-v, --verbose`: Show verbose output
 - `-d, --debug`: Show debug information (command, file path, prompt)
+- `--no-edit-permission`: Disable file edit permissions for Claude (default: edit permissions enabled)
+
+**Note**: By default, Claude is executed with file edit permissions (`--dangerously-skip-permissions` flag) to allow complete task execution. Use `--no-edit-permission` if you want Claude to run in read-only mode.
 
 ### View Task History
 ```bash
@@ -181,8 +184,43 @@ Configuration is stored in `.claude-tasks/config.json`:
   "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
   "archiveDir": "archive",
-  "language": "en"
+  "language": "en",
+  "defaultPrerequisites": [
+    "<!-- Add prerequisites here -->"
+  ],
+  "defaultRules": [
+    "<!-- Add rules here -->"
+  ],
+  "defaultTasks": [
+    "Task 1",
+    "Task 2",
+    "Task 3"
+  ]
 }
+```
+
+### Array Configuration
+
+Since v1.0.6, `defaultPrerequisites`, `defaultRules`, and `defaultTasks` support array format for easier editing:
+
+```json
+{
+  "defaultPrerequisites": [
+    "<!-- Add prerequisites here -->",
+    "Required environment",
+    "Required permissions",
+    "Pre-setup steps"
+  ]
+}
+```
+
+This will be automatically converted to:
+```markdown
+## Prerequisites
+<!-- Add prerequisites here -->
+- Required environment
+- Required permissions
+- Pre-setup steps
 ```
 
 ### Language Settings

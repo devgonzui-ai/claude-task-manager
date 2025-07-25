@@ -46,6 +46,22 @@ export class TaskManager {
   }
 
   /**
+   * Detect initial language from environment
+   */
+  private detectInitialLanguage(): Language {
+    // Check environment variables
+    const lang = process.env.LANG || process.env.LANGUAGE || '';
+    
+    // If Japanese locale is detected, use Japanese
+    if (lang.toLowerCase().includes('ja')) {
+      return 'ja';
+    }
+    
+    // Default to English
+    return 'en';
+  }
+
+  /**
    * Find the project root by looking for .claude-tasks directory
    * Similar to how git finds .git directory
    */
@@ -87,20 +103,31 @@ export class TaskManager {
 
       // Create config file if it doesn't exist
       if (!await fs.pathExists(this.config.configFile)) {
+        // Determine initial language from environment or default to 'en'
+        const initialLang = this.detectInitialLanguage();
+        
+        // Initialize i18n BEFORE creating config to get proper defaults
+        await this.i18n.init(initialLang);
+        
+        // Now create config with language-aware defaults
+        const isJapanese = initialLang === 'ja';
         const defaultConfig: TaskConfig = {
           created: new Date().toISOString(),
           taskTemplate: this.getDefaultTaskTemplate(),
           claudeCommand: 'claude',
-          defaultTaskTitle: 'New Task',
+          defaultTaskTitle: isJapanese ? '新しいタスク' : 'New Task',
           archiveDir: 'archive',
-          language: 'en'
+          language: initialLang,
+          defaultPrerequisites: isJapanese ? ['<!-- 前提条件を記入してください -->'] : ['<!-- Add prerequisites here -->'],
+          defaultRules: isJapanese ? ['<!-- ルールを記入してください -->'] : ['<!-- Add rules here -->'],
+          defaultTasks: isJapanese ? ['タスク 1', 'タスク 2', 'タスク 3'] : ['Task 1', 'Task 2', 'Task 3']
         };
         await fs.writeJson(this.config.configFile, defaultConfig, { spaces: 2 });
+      } else {
+        // If config exists, initialize i18n with configured language
+        const config = await this.getConfig();
+        await this.i18n.init(config.language || 'en');
       }
-
-      // Initialize i18n with configured language
-      const config = await this.getConfig();
-      await this.i18n.init(config.language || 'en');
 
       // Create initial task file if it doesn't exist
       if (!await fs.pathExists(this.config.taskFile)) {
@@ -154,24 +181,49 @@ export class TaskManager {
 
   private async createTaskFile(title: string, description: string, options: TaskOptions = {}): Promise<void> {
     const template = await this.getTaskTemplate();
+    const config = await this.getConfig();
+    const isJapanese = config.language === 'ja';
+    
+    // Helper function to format array to markdown list
+    const formatArrayToMarkdown = (items: string[] | string | undefined, defaultValue: string): string => {
+      if (Array.isArray(items)) {
+        if (items.length === 0) {
+          return defaultValue;
+        }
+        // First item without bullet if it's a comment
+        const firstItem = items[0];
+        const isComment = firstItem.startsWith('<!--') && firstItem.endsWith('-->');
+        let result = isComment ? firstItem : `- ${firstItem}`;
+        
+        // Rest of items with bullets
+        for (let i = 1; i < items.length; i++) {
+          result += `\n- ${items[i]}`;
+        }
+        return result;
+      }
+      return items || defaultValue;
+    };
+    
+    const defaultPrerequisites = isJapanese ? '<!-- 前提条件を記入してください -->' : '<!-- Add prerequisites here -->';
+    const defaultRules = isJapanese ? '<!-- ルールを記入してください -->' : '<!-- Add rules here -->';
+    const defaultTaskItems = isJapanese ? '- タスク 1\n- タスク 2\n- タスク 3' : '- Task 1\n- Task 2\n- Task 3';
+    
     const variables: TemplateVariables = {
       TITLE: title,
       DESCRIPTION: description,
       DATE: new Date().toISOString(),
       TIMESTAMP: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       PRIORITY: options.priority || 'medium',
-      TAGS: options.tags?.join(', ') || ''
+      TAGS: options.tags?.join(', ') || '',
+      PREREQUISITES: options.prerequisites || formatArrayToMarkdown(config.defaultPrerequisites, defaultPrerequisites),
+      RULES: options.rules || formatArrayToMarkdown(config.defaultRules, defaultRules),
+      TASKS: options.tasks || formatArrayToMarkdown(config.defaultTasks, defaultTaskItems)
     };
 
     let content = template;
     Object.entries(variables).forEach(([key, value]) => {
       content = content.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
-    
-    // Replace {{TASKS}} with default task list if not already replaced
-    if (content.includes('{{TASKS}}')) {
-      content = content.replace(/{{TASKS}}/g, '- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3');
-    }
 
     await fs.writeFile(this.config.taskFile, content);
   }
@@ -182,8 +234,10 @@ export class TaskManager {
         return null;
       }
 
-      const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
-      const archiveFileName = `${timestamp}_task.md`;
+      const now = new Date();
+      const timestamp = format(now, 'yyyy-MM-dd_HH-mm-ss');
+      const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
+      const archiveFileName = `${timestamp}-${milliseconds}_task.md`;
       const archivePath = path.join(this.config.archiveDir, archiveFileName);
 
       // Read current task and add archive metadata
@@ -203,7 +257,7 @@ export class TaskManager {
     }
   }
 
-  async runTask(verbose: boolean = false, debug: boolean = false): Promise<ExecutionResult> {
+  async runTask(verbose: boolean = false, debug: boolean = false, editPermission: boolean = true): Promise<ExecutionResult> {
     if (!await fs.pathExists(this.config.taskFile)) {
       throw new TaskManagerError('No task.md file found. Run "claude-task new" first.', 'NO_TASK_FILE');
     }
@@ -238,7 +292,7 @@ export class TaskManager {
       let result: string;
       try {
         // Execute Claude with the prompt
-        result = await this.executeClaude(prompt, claudeCommand);
+        result = await this.executeClaude(prompt, claudeCommand, editPermission);
         console.log(chalk.green('\n✅ Claude Code execution completed'));
       } catch (error) {
         console.error(chalk.red('\n❌ Claude Code execution failed'));
@@ -272,12 +326,17 @@ export class TaskManager {
     }
   }
 
-  private async executeClaude(prompt: string, claudeCommand: string = 'claude'): Promise<string> {
+  private async executeClaude(prompt: string, claudeCommand: string = 'claude', editPermission: boolean = true): Promise<string> {
     return new Promise((resolve, reject) => {
       // Execute claude with the prompt in non-interactive mode
       // Use 'inherit' to allow Claude to show output in the terminal
       // Use --print flag to exit after completing the task
-      const claudeProcess = spawn(claudeCommand, ['--print', prompt], {
+      // Use --dangerously-skip-permissions to allow file edits (if editPermission is true)
+      const args = editPermission 
+        ? ['--dangerously-skip-permissions', '--print', prompt]
+        : ['--print', prompt];
+      
+      const claudeProcess = spawn(claudeCommand, args, {
         stdio: 'inherit',
         shell: false
       });
@@ -427,6 +486,10 @@ ${t.tags}
 
 ${t.description}
 
+${t.prerequisites}
+
+${t.rules}
+
 ${t.tasks}
 
 ${t.context}
@@ -445,6 +508,12 @@ ${t.footer}
 
 ## Description
 {{DESCRIPTION}}
+
+## Prerequisites
+{{PREREQUISITES}}
+
+## Rules
+{{RULES}}
 
 ## Tasks
 {{TASKS}}
@@ -482,13 +551,70 @@ ${t.footer}
   async updateConfig(updates: Partial<TaskConfig>): Promise<void> {
     try {
       const currentConfig = await this.getConfig();
-      const newConfig = { ...currentConfig, ...updates };
-      await fs.writeJson(this.config.configFile, newConfig, { spaces: 2 });
+      let newConfig = { ...currentConfig, ...updates };
       
       // Update i18n language if changed
       if (updates.language && updates.language !== this.i18n.getLanguage()) {
         await this.i18n.init(updates.language);
+        
+        // Update language-specific defaults if they haven't been customized
+        const isJapanese = updates.language === 'ja';
+        
+        // Only update defaults if they match the old language defaults
+        const isDefaultPrerequisites = (val: string | string[] | undefined) => {
+          if (typeof val === 'string') {
+            return val === '<!-- Add prerequisites here -->' || val === '<!-- 前提条件を記入してください -->';
+          }
+          if (Array.isArray(val) && val.length === 1) {
+            return val[0] === '<!-- Add prerequisites here -->' || val[0] === '<!-- 前提条件を記入してください -->';
+          }
+          return false;
+        };
+        
+        const isDefaultRules = (val: string | string[] | undefined) => {
+          if (typeof val === 'string') {
+            return val === '<!-- Add rules here -->' || val === '<!-- ルールを記入してください -->';
+          }
+          if (Array.isArray(val) && val.length === 1) {
+            return val[0] === '<!-- Add rules here -->' || val[0] === '<!-- ルールを記入してください -->';
+          }
+          return false;
+        };
+        
+        const isDefaultTasks = (val: string | string[] | undefined) => {
+          if (typeof val === 'string') {
+            return val === '- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3' || val === '- [ ] タスク 1\n- [ ] タスク 2\n- [ ] タスク 3' ||
+                   val === '- Task 1\n- Task 2\n- Task 3' || val === '- タスク 1\n- タスク 2\n- タスク 3';
+          }
+          if (Array.isArray(val) && val.length === 3) {
+            return (val[0] === 'Task 1' && val[1] === 'Task 2' && val[2] === 'Task 3') ||
+                   (val[0] === 'タスク 1' && val[1] === 'タスク 2' && val[2] === 'タスク 3');
+          }
+          return false;
+        };
+        
+        if (isDefaultPrerequisites(currentConfig.defaultPrerequisites)) {
+          newConfig.defaultPrerequisites = isJapanese ? ['<!-- 前提条件を記入してください -->'] : ['<!-- Add prerequisites here -->'];
+        }
+        
+        if (isDefaultRules(currentConfig.defaultRules)) {
+          newConfig.defaultRules = isJapanese ? ['<!-- ルールを記入してください -->'] : ['<!-- Add rules here -->'];
+        }
+        
+        if (isDefaultTasks(currentConfig.defaultTasks)) {
+          newConfig.defaultTasks = isJapanese ? ['タスク 1', 'タスク 2', 'タスク 3'] : ['Task 1', 'Task 2', 'Task 3'];
+        }
+        
+        if (currentConfig.defaultTaskTitle === 'New Task' || 
+            currentConfig.defaultTaskTitle === '新しいタスク') {
+          newConfig.defaultTaskTitle = isJapanese ? '新しいタスク' : 'New Task';
+        }
+        
+        // Update the task template with the new language
+        newConfig.taskTemplate = this.getDefaultTaskTemplate();
       }
+      
+      await fs.writeJson(this.config.configFile, newConfig, { spaces: 2 });
     } catch (error) {
       throw new FileSystemError(
         `Failed to update config: ${error instanceof Error ? error.message : 'Unknown error'}`,

@@ -57,12 +57,18 @@ describe('Git-like Project Root Detection', () => {
 
         // Archive should contain the previous root task
         const archiveFiles = await fs.readdir(path.join(rootDir, 'archive'));
-        expect(archiveFiles.length).toBe(1);
-        const archivedContent = await fs.readFile(
-          path.join(rootDir, 'archive', archiveFiles[0]),
-          'utf8'
-        );
-        expect(archivedContent).toContain('Root Task');
+        expect(archiveFiles.length).toBe(2); // Initial task + root task
+        
+        // Find the archived file that contains "Root Task"
+        let rootTaskArchived = false;
+        for (const file of archiveFiles) {
+          const content = await fs.readFile(path.join(rootDir, 'archive', file), 'utf8');
+          if (content.includes('Root Task')) {
+            rootTaskArchived = true;
+            break;
+          }
+        }
+        expect(rootTaskArchived).toBe(true);
 
         // No task files should be created in subdirectory
         expect(await fs.pathExists(path.join(subDir1, 'task.md'))).toBe(false);
@@ -105,12 +111,14 @@ describe('Git-like Project Root Detection', () => {
         // Get status
         const status = await taskManager.getStatus();
         expect(status.currentTask).toBe('New Task');
-        expect(status.archivedCount).toBe(1); // Root Task was archived
+        expect(status.archivedCount).toBe(2); // Initial task + Root Task were archived
 
         // Get history
         const history = await taskManager.getHistory();
-        expect(history.length).toBe(1);
-        expect(history[0].title).toBe('Root Task');
+        expect(history.length).toBe(2); // Initial task + Root Task
+        // Find the Root Task in history
+        const rootTaskInHistory = history.find(h => h.title === 'Root Task');
+        expect(rootTaskInHistory).toBeDefined();
       } finally {
         process.chdir(originalCwd);
       }

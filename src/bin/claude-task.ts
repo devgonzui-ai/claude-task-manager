@@ -86,12 +86,13 @@ program
   .description(i18n.t('commands.run.description'))
   .option('-v, --verbose', 'Verbose output')
   .option('-d, --debug', 'Debug output')
+  .option('--no-edit-permission', 'Disable file edit permissions for Claude (default: edit permissions enabled)')
   .action(async (options) => {
     try {
       console.log(chalk.blue(i18n.t('commands.run.starting')));
       const startTime = Date.now();
       
-      const result = await taskManager.runTask(options.verbose, options.debug);
+      const result = await taskManager.runTask(options.verbose, options.debug, options.editPermission);
       const duration = Date.now() - startTime;
       
       if (result.success) {

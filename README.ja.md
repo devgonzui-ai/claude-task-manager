@@ -1,5 +1,8 @@
 # Claude Task Manager
 
+[![npm version](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager.svg)](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 English version: After installation, see `node_modules/@gonzui/claude-task-manager/README.md`
 
 Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タスクの作成、実行、履歴管理を自動化します。
@@ -94,6 +97,9 @@ claude-task run -v
 
 # デバッグ情報付き（コマンド、ファイルパス、プロンプトを表示）
 claude-task run -d
+
+# ファイル編集権限なしで実行（読み取り専用モード）
+claude-task run --no-edit-permission
 ```
 
 ### 履歴の確認
@@ -245,7 +251,18 @@ interface TaskStatus {
   "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
   "archiveDir": "archive",
-  "language": "ja"
+  "language": "ja",
+  "defaultPrerequisites": [
+    "<!-- 前提条件をここに追加 -->"
+  ],
+  "defaultRules": [
+    "<!-- ルールをここに追加 -->"
+  ],
+  "defaultTasks": [
+    "タスク 1",
+    "タスク 2",
+    "タスク 3"
+  ]
 }
 ```
 
@@ -270,6 +287,30 @@ claude-task lang en
 - カスタムコマンドテンプレート
 - エラーメッセージ
 
+### 配列設定
+
+v1.0.6以降、`defaultPrerequisites`、`defaultRules`、`defaultTasks`は配列形式をサポートし、編集が容易になりました：
+
+```json
+{
+  "defaultPrerequisites": [
+    "<!-- 前提条件をここに追加 -->",
+    "必要な環境",
+    "必要な権限",
+    "事前のセットアップ手順"
+  ]
+}
+```
+
+これは自動的に以下のように変換されます：
+```markdown
+## Prerequisites
+<!-- 前提条件をここに追加 -->
+- 必要な環境
+- 必要な権限
+- 事前のセットアップ手順
+```
+
 ### 設定の例
 
 ```json
@@ -284,6 +325,8 @@ claude-task lang en
 
 - `taskTemplate`: 新しいタスクファイルのテンプレート
 - `claudeCommand`: Claude Code の実行コマンド（デフォルト: "claude"）
+
+**注意**: デフォルトでは、Claudeはファイル編集権限（`--dangerously-skip-permissions`フラグ）付きで実行され、タスクを完全に実行できます。読み取り専用モードでClaudeを実行したい場合は、`--no-edit-permission`を使用してください。
 
 ## テンプレート変数
 

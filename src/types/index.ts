@@ -5,6 +5,9 @@ export interface TaskConfig {
   defaultTaskTitle?: string;
   archiveDir?: string;
   language?: 'en' | 'ja';
+  defaultPrerequisites?: string | string[];
+  defaultRules?: string | string[];
+  defaultTasks?: string | string[];
 }
 
 export interface TaskOptions {
@@ -12,6 +15,9 @@ export interface TaskOptions {
   description?: string;
   priority?: 'low' | 'medium' | 'high';
   tags?: string[];
+  prerequisites?: string;
+  rules?: string;
+  tasks?: string;
 }
 
 export interface TaskMetadata {
@@ -56,6 +62,9 @@ export interface TemplateVariables {
   TIMESTAMP: string;
   PRIORITY: string;
   TAGS: string;
+  PREREQUISITES: string;
+  RULES: string;
+  TASKS: string;
 }
 
 export interface ClaudeTaskManagerConfig {

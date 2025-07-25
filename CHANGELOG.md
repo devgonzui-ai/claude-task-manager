@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2024-07-25
+
+### Added
+- Task template now includes Prerequisites and Rules sections
+- Support for array format in config.json for `defaultPrerequisites`, `defaultRules`, and `defaultTasks` for easier editing
+- `--dangerously-skip-permissions` flag by default for `claude-task run` to enable file edit permissions
+- `--no-edit-permission` option for `claude-task run` to disable file edit permissions
+
+### Changed
+- Improved language detection from environment variables (LANG) during initialization
+- Enhanced language switching to update defaults appropriately
+- Updated archive filename format to include milliseconds to prevent overwrites
+- Task items no longer include checkboxes by default (changed from `- [ ] Task` to `- Task`)
+
+### Fixed
+- Template variable replacement now works correctly for both English and Japanese
+- Language-specific defaults are properly set when switching languages
+
 ## [1.0.5] - 2024-07-24
 
 ### Added

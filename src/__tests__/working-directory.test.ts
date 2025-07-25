@@ -103,8 +103,8 @@ describe('Working Directory Behavior', () => {
 
       // Archive should be in tempDir/archive
       const archiveFiles = await fs.readdir(path.join(tempDir, 'archive'));
-      expect(archiveFiles.length).toBe(1);
-      expect(archiveFiles[0]).toMatch(/_task\.md$/);
+      expect(archiveFiles.length).toBe(2); // Initial task + existing task
+      expect(archiveFiles[0]).toMatch(/-\d{3}_task\.md$/);
     });
   });
 });

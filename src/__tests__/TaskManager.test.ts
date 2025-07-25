@@ -75,11 +75,12 @@ describe('TaskManager', () => {
         description: 'Second Description'
       });
 
-      // Check that archive directory contains the first task
+      // Check that archive directory contains both initial and first task
       const archiveDir = path.join(tempDir, 'archive');
       const archiveFiles = await fs.readdir(archiveDir);
-      expect(archiveFiles.length).toBe(1);
-      expect(archiveFiles[0]).toMatch(/_task\.md$/);
+      expect(archiveFiles.length).toBe(2); // Initial task + First task were archived
+      expect(archiveFiles[0]).toMatch(/-\d{3}_task\.md$/);
+      expect(archiveFiles[1]).toMatch(/-\d{3}_task\.md$/);
 
       // Check that current task is the second one
       const currentContent = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
@@ -159,11 +160,12 @@ describe('TaskManager', () => {
     });
 
     it('should track archived tasks count', async () => {
-      await taskManager.createNewTask({ title: 'Task 1' });
-      await taskManager.createNewTask({ title: 'Task 2' });
+      // Initial task is already created during init()
+      await taskManager.createNewTask({ title: 'Task 1' }); // Archives Initial Task
+      await taskManager.createNewTask({ title: 'Task 2' }); // Archives Task 1
 
       const status = await taskManager.getStatus();
-      expect(status.archivedCount).toBe(1); // Initial task was archived
+      expect(status.archivedCount).toBe(2); // Initial task + Task 1 were archived
       expect(status.currentTask).toBe('Task 2');
     });
   });
