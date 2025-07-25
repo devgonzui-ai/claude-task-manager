@@ -275,21 +275,31 @@ Contributions are welcome!
 
 ## Changelog
 
-### v1.0.5 (2024-07-24)
+### v1.0.6 (2025-07-25)
+- Feature: Add Prerequisites and Rules sections to task templates
+- Feature: Support array format in config.json for easier editing
+- Feature: Enable file edit permissions by default with `--dangerously-skip-permissions`
+- Feature: Add `--no-edit-permission` option to disable file edits
+- Improved: Language detection from environment variables
+- Improved: Archive filename format with milliseconds
+- Fix: Template variable replacement for both languages
+- Fix: Remove checkboxes from default task items
+
+### v1.0.5 (2025-07-24)
 - Feature: Fix `claude-task run` command to properly execute tasks
 - Feature: Add `--debug` flag to show detailed execution information
 - Feature: Change from absolute to relative path in Claude prompts
 - Fix: Update default claude command from 'claude code' to 'claude'
 - Improved: Use `--print` flag for non-interactive Claude execution
 
-### v1.0.2 (2024-07-23)
+### v1.0.2 (2025-07-23)
 - Fix: Dynamic version reading from package.json for accurate version display
 
-### v1.0.1 (2024-07-23)
+### v1.0.1 (2025-07-23)
 - Fix: Create .claude/commands directory when .claude exists during init
 - Improved: Claude Code custom command generation
 
-### v1.0.0 (2024-07-23)
+### v1.0.0 (2025-07-23)
 - Initial release
 - Task management with archiving and history
 - Multi-language support (English/Japanese)

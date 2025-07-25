@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Template variable replacement now works correctly for both English and Japanese
 - Language-specific defaults are properly set when switching languages
 
-## [1.0.5] - 2024-07-24
+## [1.0.5] - 2025-07-24
 
 ### Added
 - `--debug` flag for `claude-task run` command to show detailed execution information
@@ -42,22 +42,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Automatic version bump workflow (version-bump.yml)
 
-## [1.0.4] - 2024-07-23
+## [1.0.4] - 2025-07-23
 
 ### Fixed
 - Various bug fixes and improvements
 
-## [1.0.3] - 2024-07-23
+## [1.0.3] - 2025-07-23
 
 ### Fixed
 - Various bug fixes and improvements
 
-## [1.0.2] - 2024-07-23
+## [1.0.2] - 2025-07-23
 
 ### Fixed
 - Dynamic version reading from package.json for accurate version display
 
-## [1.0.1] - 2024-07-23
+## [1.0.1] - 2025-07-23
 
 ### Fixed
 - Create .claude/commands directory when .claude exists during init
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improved
 - Claude Code custom command generation
 
-## [1.0.0] - 2024-07-23
+## [1.0.0] - 2025-07-23
 
 ### Added
 - Initial release
