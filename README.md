@@ -275,6 +275,9 @@ Contributions are welcome!
 
 ## Changelog
 
+### v1.0.7 (2025-07-25)
+- Fix: Documentation dates corrected from 2024 to 2025
+
 ### v1.0.6 (2025-07-25)
 - Feature: Add Prerequisites and Rules sections to task templates
 - Feature: Support array format in config.json for easier editing
