@@ -159,6 +159,22 @@ program
   });
 
 program
+  .command('archive')
+  .description(i18n.t('commands.archive.description'))
+  .action(async () => {
+    try {
+      const archivedPath = await taskManager.archiveCurrentTask();
+      if (archivedPath) {
+        console.log(chalk.green(i18n.t('commands.archive.success', { path: path.basename(archivedPath) })));
+      } else {
+        console.log(chalk.yellow(i18n.t('commands.archive.noTask')));
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
   .command('config')
   .description('Show or update configuration')
   .option('--set-template <file>', 'Set custom task template from file')

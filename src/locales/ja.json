@@ -43,6 +43,11 @@
       "current": "現在の言語: {{lang}}",
       "changed": "✅ 言語を変更しました: {{lang}}",
       "invalid": "❌ 無効な言語です。対応言語: en, ja"
+    },
+    "archive": {
+      "description": "現在のタスクをアーカイブ",
+      "success": "✅ タスクをアーカイブしました: {{path}}",
+      "noTask": "⚠️  アーカイブするタスクがありません"
     }
   },
   "errors": {

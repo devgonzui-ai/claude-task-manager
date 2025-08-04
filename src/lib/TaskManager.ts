@@ -649,136 +649,127 @@ ${t.footer}
   }
 
   private generateCustomCommandContent(): string {
-    const cmd = this.i18n.getNamespace('customCommand');
-    const actions = cmd.actions;
-    const examples = cmd.examples;
-    
-    return `${cmd.title}
+    // Always generate English version for better Claude Code compatibility
+    return `# /task - Claude Task Manager
 
-${cmd.description}
+Task management custom command for Claude Code.
 
-${cmd.usage}
+## Usage
 
-${actions.title}
+\`/task <action> [options]\`
 
-${actions.new.title}
-${actions.new.syntax}
+## Actions
 
-${actions.new.description}
+### Create New Task
+\`/task new "<task name>" [--priority high|medium|low] [--tags tag1,tag2]\`
 
-${actions.status.title}
-${actions.status.syntax}
+Creates a task and saves it to task.md file.
 
-${actions.status.description}
+### Check Current Task
+\`/task status\`
 
-${actions.run.title}
-${actions.run.syntax}
+Shows current task and its progress.
 
-${actions.run.description}
+### Execute Task
+\`/task run\`
 
-${actions.history.title}
-${actions.history.syntax}
+Executes current task with Claude Code using task.md content as context.
 
-${actions.history.description}
+### Task History
+\`/task history [--limit n]\`
 
-${actions.archive.title}
-${actions.archive.syntax}
+Shows past and archived tasks.
 
-${actions.archive.description}
+### Archive Task
+\`/task archive\`
+
+Moves completed task to archive folder.
 
 ## Implementation
 
-\`\`\`typescript
-import { TaskManager } from 'claude-task-manager';
-import * as path from 'path';
+This command uses the \`claude-task\` CLI tool for task management.
 
-async function executeTaskCommand(action: string, ...args: string[]) {
-  const taskManager = new TaskManager(process.cwd());
-  
-  try {
-    await taskManager.init();
-    const i18n = await taskManager.getLanguage();
-    
-    switch (action) {
-      case 'new': {
-        const title = args[0] || 'New Task';
-        let priority = 'medium';
-        let tags: string[] = [];
-        
-        for (let i = 1; i < args.length; i++) {
-          if (args[i] === '--priority' && args[i + 1]) {
-            priority = args[i + 1];
-            i++;
-          } else if (args[i] === '--tags' && args[i + 1]) {
-            tags = args[i + 1].split(',');
-            i++;
-          }
-        }
-        
-        await taskManager.createNewTask({ title, priority, tags });
-        console.log('✅ Task created: ' + title);
-        break;
-      }
-      
-      case 'status': {
-        const status = await taskManager.getStatus();
-        console.log('📊 Task Status:');
-        console.log('Current task: ' + (status.currentTask || 'None'));
-        console.log('Archived: ' + status.archivedCount);
-        console.log('Last run: ' + (status.lastRun || 'Never'));
-        console.log('Total executions: ' + status.totalExecutions);
-        break;
-      }
-      
-      case 'run': {
-        console.log('🚀 Executing task...');
-        const taskContent = await taskManager.getTaskContent();
-        console.log('\\n=== TASK.MD CONTENT START ===');
-        console.log(taskContent);
-        console.log('=== TASK.MD CONTENT END ===\\n');
-        console.log('📋 Please work on the task defined in the task.md file above.');
-        console.log('💡 Note: Focus only on the content between the markers above.');
-        break;
-      }
-      
-      case 'history': {
-        const limit = parseInt(args.find(arg => arg.startsWith('--limit='))?.split('=')[1] || '10');
-        const history = await taskManager.getHistory(limit);
-        console.log('📜 Task History:');
-        history.forEach(item => {
-          console.log('- ' + item.date + ': ' + item.title);
-        });
-        break;
-      }
-      
-      case 'archive': {
-        const archivedPath = await taskManager.archiveCurrentTask();
-        if (archivedPath) {
-          console.log('✅ Task archived: ' + path.basename(archivedPath));
-        } else {
-          console.log('⚠️  No task to archive.');
-        }
-        break;
-      }
-      
-      default:
-        console.log('Usage: /task <new|status|run|history|archive> [options]');
-    }
-  } catch (error) {
-    console.error('❌ Error:', error instanceof Error ? error.message : error);
-  }
-}
+### How to Process Commands
 
-// When called from Claude Code
-const args = process.argv.slice(2);
-if (args.length > 0) {
-  executeTaskCommand(args[0], ...args.slice(1));
-}
+**IMPORTANT**: Follow these instructions to execute actual CLI commands using the Bash tool.
+
+1. When \`/task new "task name"\` is executed:
+   \`\`\`bash
+   claude-task new "task name"
+   \`\`\`
+   - Execute this command using the Bash tool
+   - Pass optional arguments appropriately (e.g., \`--priority high --tags auth,backend\`)
+
+2. When \`/task status\` is executed:
+   \`\`\`bash
+   claude-task status
+   \`\`\`
+   - Execute this command using the Bash tool
+
+3. When \`/task run\` is executed:
+   - Reference the \`@task.md\` file content
+   - Execute work according to the task content
+
+4. When \`/task history\` is executed:
+   \`\`\`bash
+   claude-task history
+   \`\`\`
+   - Execute this command using the Bash tool
+   - Add \`--limit\` option if provided
+
+5. When \`/task archive\` is executed:
+   \`\`\`bash
+   claude-task archive
+   \`\`\`
+   - Execute this command using the Bash tool
+
+### Process Flow
+
+\`\`\`
+User: /task new "Implement new feature"
+↓
+Claude: Execute \`claude-task new "Implement new feature"\` using Bash tool
+↓
+Display result
 \`\`\`
 
-${examples.title}
+## Examples
 
-${examples.items.join('\n\n')}`;
+1. Create new task:
+   \`\`\`
+   /task new "Implement user authentication" --priority high --tags auth,backend
+   \`\`\`
+   → Execute with Bash: \`claude-task new "Implement user authentication" --priority high --tags auth,backend\`
+
+2. Check current task:
+   \`\`\`
+   /task status
+   \`\`\`
+   → Execute with Bash: \`claude-task status\`
+
+3. Execute task:
+   \`\`\`
+   /task run
+   \`\`\`
+   → Reference @task.md and execute work according to content
+
+4. View task history:
+   \`\`\`
+   /task history --limit 10
+   \`\`\`
+   → Execute with Bash: \`claude-task history --limit 10\`
+
+5. Archive completed task:
+   \`\`\`
+   /task archive
+   \`\`\`
+   → Execute with Bash: \`claude-task archive\`
+
+## Important Notes
+
+- **All commands must be executed using the Bash tool to run actual \`claude-task\` CLI commands**
+- Task names with spaces must be enclosed in quotes
+- Only \`/task run\` requires special processing (reference @task.md and execute)`;
   }
 
   async getTaskContent(): Promise<string> {

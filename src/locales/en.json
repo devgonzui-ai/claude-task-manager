@@ -43,6 +43,11 @@
       "current": "Current language: {{lang}}",
       "changed": "✅ Language changed to: {{lang}}",
       "invalid": "❌ Invalid language. Supported: en, ja"
+    },
+    "archive": {
+      "description": "Archive current task",
+      "success": "✅ Task archived: {{path}}",
+      "noTask": "⚠️  No task to archive"
     }
   },
   "errors": {

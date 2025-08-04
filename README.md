@@ -88,6 +88,13 @@ Options:
 claude-task history --limit 10
 ```
 
+### Archive Current Task
+```bash
+claude-task archive
+```
+
+Moves the current task to the archive folder with a timestamp.
+
 ### Direct Claude Code Execution
 ```bash
 claude-task claude "Review and optimize the database schema"
@@ -274,6 +281,13 @@ MIT
 Contributions are welcome!
 
 ## Changelog
+
+### v1.0.8 (2025-08-04)
+- Feature: Add `archive` command to manually archive current task
+- Improved: Custom command file now generated in English for better Claude Code compatibility
+- Improved: Custom command instructions to explicitly use Bash tool
+- Improved: `/task run` command simplified to use `@task.md` reference
+- Fix: `/task new` command now properly creates new tasks through actual CLI execution
 
 ### v1.0.7 (2025-07-25)
 - Fix: Documentation dates corrected from 2024 to 2025
