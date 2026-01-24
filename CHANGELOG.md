@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-24
+
+### Added
+- `progress` command to track subtask completion with visual progress bar
+- `split` command to automatically break down tasks into subtasks using AI (Claude CLI)
+- `hooks` command to configure Claude Code hooks for task automation
+- 60-second timeout for Claude CLI calls in split command
+
+### Changed
+- Major code refactoring: Split TaskManager.ts (865 lines) into focused modules
+  - ConfigManager.ts - Configuration management
+  - TaskFileManager.ts - Task file CRUD operations
+  - ClaudeExecutor.ts - Claude CLI execution logic
+  - HistoryManager.ts - History and status management
+  - CustomCommandGenerator.ts - Custom command generation
+  - ProgressTracker.ts - Progress tracking
+  - TaskSplitter.ts - AI-powered task splitting
+  - HooksManager.ts - Claude Code hooks management
+- Updated Node.js requirement to >= 18.0.0
+- Improved type safety: Replaced `any` types with proper types
+- Made `setLanguage` method async for consistency
+
+### Fixed
+- Split command now properly handles Claude CLI timeout
+- Removed unused TypeScript decorator options from tsconfig.json
+
 ## [1.0.8] - 2025-08-04
 
 ### Added

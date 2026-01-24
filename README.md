@@ -15,6 +15,9 @@ A powerful task management extension for Claude Code that automates task trackin
 - 🏷️ **Priority and Tags**: Organize tasks with priority levels (high/medium/low) and custom tags
 - 📊 **Task History**: View and track all completed tasks
 - 🎯 **Custom Commands**: Automatically creates `/task` custom command for Claude Code
+- 📈 **Progress Tracking**: Visual progress bar for subtask completion
+- 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
+- 🔗 **Hooks Integration**: Configure Claude Code hooks for task automation
 
 ## Installation
 
@@ -94,6 +97,43 @@ claude-task archive
 ```
 
 Moves the current task to the archive folder with a timestamp.
+
+### Track Progress
+```bash
+claude-task progress
+```
+
+Displays a visual progress bar showing subtask completion status:
+```
+📊 Task Progress
+================
+Progress: [████████░░░░░░░░░░░░] 40%
+Completed: 2/5 tasks
+```
+
+### Split Task into Subtasks
+```bash
+claude-task split
+claude-task split --count 5
+```
+
+Uses Claude AI to automatically break down your current task into actionable subtasks. The generated subtasks are added to your `task.md` file.
+
+Options:
+- `--count`: Specify the number of subtasks to generate (default: 3-7)
+
+### Configure Hooks
+```bash
+claude-task hooks
+claude-task hooks --status
+```
+
+Sets up Claude Code hooks for task automation. After setup, the following hooks are configured:
+- After `claude-task run`: Logs completion timestamp
+- After `claude-task new`: Shows task progress
+- After `claude-task archive`: Shows task status
+
+Use `--status` to check current hooks configuration.
 
 ### Direct Claude Code Execution
 ```bash
@@ -281,6 +321,15 @@ MIT
 Contributions are welcome!
 
 ## Changelog
+
+### v1.1.0 (2025-01-24)
+- Feature: Add `progress` command for visual subtask completion tracking
+- Feature: Add `split` command to auto-generate subtasks using Claude AI
+- Feature: Add `hooks` command for Claude Code hooks integration
+- Refactor: Split TaskManager.ts into focused modules for better maintainability
+- Improved: Node.js requirement updated to >= 18.0.0
+- Improved: Better type safety with proper TypeScript types
+- Fix: Split command timeout handling for Claude CLI
 
 ### v1.0.8 (2025-08-04)
 - Feature: Add `archive` command to manually archive current task
