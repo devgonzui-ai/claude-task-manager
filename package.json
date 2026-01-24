@@ -25,6 +25,14 @@
   ],
   "author": "gonzui",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devgonzui-ai/claude-task-manager.git"
+  },
+  "homepage": "https://github.com/devgonzui-ai/claude-task-manager#readme",
+  "bugs": {
+    "url": "https://github.com/devgonzui-ai/claude-task-manager/issues"
+  },
   "dependencies": {
     "commander": "^11.0.0",
     "fs-extra": "^11.1.1",
