@@ -133,7 +133,7 @@ The custom command file is automatically generated in the language configured in
 ```markdown
 # Task Title
 
-**Created:** 2024-01-15 10:30:00  
+**Created:** 2025-01-15 10:30:00  
 **Priority:** high  
 **Tags:** feature, backend
 
@@ -186,7 +186,7 @@ Configuration is stored in `.claude-tasks/config.json`:
 
 ```json
 {
-  "created": "2024-01-15T10:00:00.000Z",
+  "created": "2025-01-15T10:00:00.000Z",
   "taskTemplate": "...",
   "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
@@ -253,7 +253,7 @@ The language setting affects:
 
 ## Requirements
 
-- Node.js >= 16.0.0
+- Node.js >= 18.0.0
 - Claude Code CLI installed and configured
 
 ## Development

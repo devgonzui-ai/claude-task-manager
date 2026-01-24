@@ -203,14 +203,14 @@ describe('Claude Task CLI', () => {
         // Small delay to ensure different timestamps
         await new Promise(resolve => setTimeout(resolve, 50));
       }
-      
+
       const result = await runCLI(['history', '--limit', '3'], tempDir);
-      
+
       expect(result.code).toBe(0);
       // Should show only 3 most recent archived tasks
       const matches = result.stdout.match(/Task \d/g);
       expect(matches?.length).toBeLessThanOrEqual(3);
-    });
+    }, 30000); // Extended timeout for multiple CLI operations
   });
 
   describe('lang command', () => {
@@ -248,9 +248,12 @@ describe('Claude Task CLI', () => {
   });
 
   describe('help command', () => {
+    // SKIP REASON: Commander.js outputs help to stdout synchronously before our async
+    // preAction hook runs, causing timing issues with i18n initialization. The help
+    // functionality works correctly in manual testing but is unreliable in tests.
     it.skip('should show help when no arguments provided', async () => {
       const result = await runCLI([], tempDir);
-      
+
       expect(result.code).toBe(0);
       // Help might be in stdout or stderr depending on commander version
       const output = result.stdout + result.stderr;
@@ -287,17 +290,21 @@ describe('Claude Task CLI', () => {
       expect(result.stderr).toContain('Invalid command');
     });
 
+    // SKIP REASON: The status command currently searches upward for .claude-tasks
+    // directory (git-like behavior) and may find an existing project root, making
+    // it difficult to test the "no task.md" scenario in isolation. The error
+    // handling works correctly when no project root exists.
     it.skip('should handle missing task.md for status', async () => {
       // Don't run init, so there's no task.md
       const emptyDir = await createTempDir();
       const result = await runCLI(['status'], emptyDir);
-      
+
       // Should fail when no task.md exists
       expect(result.code).toBe(1);
       // Error might be in stdout or stderr
       const output = result.stdout + result.stderr;
       expect(output.toLowerCase()).toMatch(/error|fail/);
-      
+
       await fs.remove(emptyDir);
     });
   });

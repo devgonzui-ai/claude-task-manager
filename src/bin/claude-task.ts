@@ -175,43 +175,8 @@ program
   });
 
 program
-  .command('config')
-  .description('Show or update configuration')
-  .option('--set-template <file>', 'Set custom task template from file')
-  .option('--set-claude-cmd <command>', 'Set Claude Code command')
-  .action(async (options) => {
-    try {
-      if (options.setTemplate) {
-        // Implementation for setting template
-        console.log(chalk.blue('🔧 Template configuration feature coming soon...'));
-      } else if (options.setClaudeCmd) {
-        // Implementation for setting Claude command
-        console.log(chalk.blue('🔧 Claude command configuration feature coming soon...'));
-      } else {
-        // Show current config
-        console.log(chalk.blue('🔧 Configuration display feature coming soon...'));
-      }
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
-  .command('claude <prompt>')
-  .description(i18n.t('commands.claude.description'))
-  .action(async (prompt: string) => {
-    try {
-      console.log(chalk.blue(i18n.t('commands.run.starting')));
-      // This would need to be implemented in TaskManager
-      console.log(chalk.yellow('Direct Claude execution feature coming soon...'));
-    } catch (error) {
-      handleError(error);
-    }
-  });
-
-program
   .command('claude [prompt...]')
-  .description('Execute Claude Code with optional prompt')
+  .description(i18n.t('commands.claude.description'))
   .action(async (promptParts: string[]) => {
     try {
       const prompt = promptParts.join(' ');

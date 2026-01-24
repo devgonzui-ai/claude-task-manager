@@ -4,7 +4,7 @@ import * as path from 'path';
 export type Language = 'en' | 'ja';
 
 interface Messages {
-  [key: string]: any;
+  [key: string]: string | Messages;
 }
 
 export class I18n {
@@ -53,18 +53,18 @@ export class I18n {
     }
   }
 
-  setLanguage(lang: Language): void {
+  async setLanguage(lang: Language): Promise<void> {
     this.currentLang = lang;
-    this.loadMessages();
+    await this.loadMessages();
   }
 
   getLanguage(): Language {
     return this.currentLang;
   }
 
-  t(key: string, params?: Record<string, any>): string {
+  t(key: string, params?: Record<string, unknown>): string {
     const keys = key.split('.');
-    let value: any = this.messages;
+    let value: string | Messages = this.messages;
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
@@ -79,19 +79,20 @@ export class I18n {
     }
 
     // Replace parameters
+    let result = value;
     if (params) {
       Object.entries(params).forEach(([paramKey, paramValue]) => {
-        value = value.replace(new RegExp(`{{${paramKey}}}`, 'g'), String(paramValue));
+        result = result.replace(new RegExp(`{{${paramKey}}}`, 'g'), String(paramValue));
       });
     }
 
-    return value;
+    return result;
   }
 
   // Get all messages for a specific namespace
-  getNamespace(namespace: string): any {
+  getNamespace(namespace: string): Messages | Record<string, never> {
     const keys = namespace.split('.');
-    let value: any = this.messages;
+    let value: string | Messages = this.messages;
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
@@ -99,6 +100,10 @@ export class I18n {
       } else {
         return {};
       }
+    }
+
+    if (typeof value === 'string') {
+      return {};
     }
 
     return value;

@@ -256,7 +256,7 @@ interface TaskStatus {
 
 ```json
 {
-  "created": "2024-01-15T10:00:00.000Z",
+  "created": "2025-01-15T10:00:00.000Z",
   "taskTemplate": "...",
   "claudeCommand": "claude",
   "defaultTaskTitle": "New Task",
@@ -349,7 +349,7 @@ v1.0.6以降、`defaultPrerequisites`、`defaultRules`、`defaultTasks`は配列
 
 ## 要件
 
-- Node.js 16.0.0 以上
+- Node.js 18.0.0 以上
 - Claude Code CLI がインストールされていること
 
 ## トラブルシューティング

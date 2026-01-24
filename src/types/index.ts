@@ -79,7 +79,7 @@ export class TaskManagerError extends Error {
   constructor(
     message: string,
     public code: string,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'TaskManagerError';
