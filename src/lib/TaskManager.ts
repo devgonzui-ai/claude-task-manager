@@ -17,6 +17,9 @@ import { TaskFileManager } from './TaskFileManager';
 import { ClaudeExecutor } from './ClaudeExecutor';
 import { HistoryManager } from './HistoryManager';
 import { CustomCommandGenerator } from './CustomCommandGenerator';
+import { ProgressTracker, ProgressResult } from './ProgressTracker';
+import { TaskSplitter, SplitResult } from './TaskSplitter';
+import { HooksManager, HooksConfig } from './HooksManager';
 
 export class TaskManager {
   private config: ClaudeTaskManagerConfig;
@@ -26,6 +29,9 @@ export class TaskManager {
   private claudeExecutor: ClaudeExecutor;
   private historyManager: HistoryManager;
   private customCommandGenerator: CustomCommandGenerator;
+  private progressTracker: ProgressTracker;
+  private taskSplitter: TaskSplitter;
+  private hooksManager: HooksManager;
 
   constructor(workingDir?: string) {
     const baseDir = workingDir || this.findProjectRoot() || process.cwd();
@@ -45,6 +51,9 @@ export class TaskManager {
     this.claudeExecutor = new ClaudeExecutor(this.config.taskFile);
     this.historyManager = new HistoryManager(this.config.taskFile, this.config.archiveDir, this.i18n);
     this.customCommandGenerator = new CustomCommandGenerator(this.config.workingDir, this.i18n);
+    this.progressTracker = new ProgressTracker(this.config.taskFile);
+    this.taskSplitter = new TaskSplitter(this.config.taskFile, this.i18n);
+    this.hooksManager = new HooksManager(this.config.workingDir, this.i18n);
 
     if (!this.i18n.isInitialized()) {
       this.i18n.init('en').catch(() => {
@@ -192,6 +201,26 @@ export class TaskManager {
       { language: lang },
       () => this.taskFileManager.getDefaultTaskTemplate()
     );
+  }
+
+  async getProgress(): Promise<ProgressResult> {
+    return await this.progressTracker.getProgress();
+  }
+
+  formatProgress(result: ProgressResult): string {
+    return this.progressTracker.formatOutput(result);
+  }
+
+  async splitTask(count?: number): Promise<SplitResult> {
+    return await this.taskSplitter.splitTask(count);
+  }
+
+  async setupHooks(config?: HooksConfig): Promise<void> {
+    await this.hooksManager.setupHooks(config);
+  }
+
+  async getHooksStatus(): Promise<{ configured: boolean; hooksCount: number; hooks: string[] }> {
+    return await this.hooksManager.getHooksStatus();
   }
 
   private async updateGitignore(): Promise<void> {

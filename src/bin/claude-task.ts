@@ -220,15 +220,84 @@ program
         console.log(i18n.t('commands.lang.current', { lang: currentLang }));
         return;
       }
-      
+
       if (language !== 'en' && language !== 'ja') {
         console.log(chalk.red(i18n.t('commands.lang.invalid')));
         return;
       }
-      
+
       await taskManager.setLanguage(language as Language);
       await i18n.init(language as Language);
       console.log(chalk.green(i18n.t('commands.lang.changed', { lang: language })));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('progress')
+  .description(i18n.t('commands.progress.description'))
+  .action(async () => {
+    try {
+      const result = await taskManager.getProgress();
+      console.log(taskManager.formatProgress(result));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('split')
+  .description(i18n.t('commands.split.description'))
+  .option('-c, --count <number>', 'Number of subtasks to generate')
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue(i18n.t('commands.split.analyzing')));
+      const count = options.count ? parseInt(options.count) : undefined;
+      const result = await taskManager.splitTask(count);
+
+      if (result.success) {
+        console.log(chalk.green(i18n.t('commands.split.success', { count: result.subtasks.length })));
+        console.log('');
+        result.subtasks.forEach((task, index) => {
+          console.log(chalk.gray(`  ${index + 1}. ${task}`));
+        });
+      } else {
+        console.log(chalk.red(i18n.t('commands.split.error', { error: result.error })));
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('hooks')
+  .description(i18n.t('commands.hooks.description'))
+  .option('--status', 'Show current hooks status')
+  .action(async (options) => {
+    try {
+      if (options.status) {
+        const status = await taskManager.getHooksStatus();
+        if (status.configured) {
+          console.log(chalk.blue('Hooks Status:'));
+          console.log(chalk.green(`  Configured: ${status.hooksCount} hook(s)`));
+          status.hooks.forEach(hook => {
+            console.log(chalk.gray(`    - ${hook}`));
+          });
+        } else {
+          console.log(chalk.yellow('No hooks configured. Run `claude-task hooks` to set up.'));
+        }
+      } else {
+        await taskManager.setupHooks();
+        console.log(chalk.green(i18n.t('commands.hooks.success')));
+        console.log('');
+        console.log(chalk.gray('Configured hooks:'));
+        console.log(chalk.gray('  - Post claude-task run: Log completion'));
+        console.log(chalk.gray('  - Post claude-task new: Show progress'));
+        console.log(chalk.gray('  - Post claude-task archive: Show status'));
+        console.log('');
+        console.log(chalk.blue('Edit .claude/settings.json to customize hooks.'));
+      }
     } catch (error) {
       handleError(error);
     }

@@ -48,6 +48,21 @@
       "description": "Archive current task",
       "success": "✅ Task archived: {{path}}",
       "noTask": "⚠️  No task to archive"
+    },
+    "progress": {
+      "description": "Show subtask progress",
+      "noTasks": "No subtasks found. Add checkboxes like:\n  - [ ] Task to do\n  - [x] Completed task"
+    },
+    "split": {
+      "description": "Split task into subtasks using AI",
+      "analyzing": "🔍 Analyzing task...",
+      "success": "✅ Task split into {{count}} subtasks",
+      "error": "❌ Failed to split task: {{error}}"
+    },
+    "hooks": {
+      "description": "Setup Claude Code hooks for task events",
+      "success": "✅ Hooks configured in .claude/hooks/",
+      "error": "❌ Failed to setup hooks: {{error}}"
     }
   },
   "errors": {
