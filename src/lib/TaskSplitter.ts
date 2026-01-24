@@ -79,17 +79,25 @@ Subtask description 3
 ...`;
   }
 
-  private async callClaude(prompt: string): Promise<string> {
+  private async callClaude(prompt: string, timeoutMs: number = 60000): Promise<string> {
     return new Promise((resolve, reject) => {
-      const args = ['--print', prompt];
+      const args = ['-p', prompt];
 
       let stdout = '';
       let stderr = '';
+      let timedOut = false;
 
       const claudeProcess = spawn('claude', args, {
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: false
       });
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        claudeProcess.kill('SIGTERM');
+        reject(new Error(`Claude CLI timed out after ${timeoutMs / 1000} seconds`));
+      }, timeoutMs);
 
       claudeProcess.stdout.on('data', (data) => {
         stdout += data.toString();
@@ -100,6 +108,9 @@ Subtask description 3
       });
 
       claudeProcess.on('close', (code) => {
+        clearTimeout(timeoutId);
+        if (timedOut) return; // Already rejected
+
         if (code === 0) {
           resolve(stdout.trim());
         } else {
@@ -108,6 +119,8 @@ Subtask description 3
       });
 
       claudeProcess.on('error', (error) => {
+        clearTimeout(timeoutId);
+        if (timedOut) return; // Already rejected
         reject(new Error(`Failed to start Claude: ${error.message}`));
       });
     });
