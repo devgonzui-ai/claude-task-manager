@@ -79,7 +79,7 @@ Subtask description 3
 ...`;
   }
 
-  private async callClaude(prompt: string, timeoutMs: number = 60000): Promise<string> {
+  private async callClaude(prompt: string, timeoutMs: number = 300000): Promise<string> {
     return new Promise((resolve, reject) => {
       const args = ['-p'];
 
