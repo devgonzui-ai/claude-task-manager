@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager.svg)](https://badge.fury.io/js/@gonzui%2Fclaude-task-manager)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-日本語版: インストール後、`node_modules/@gonzui/claude-task-manager/README.ja.md` をご覧ください。
+日本語版: [README.ja.md](https://github.com/devgonzui-ai/claude-task-manager/blob/main/README.ja.md) をご覧ください。
 
 A powerful task management extension for Claude Code that automates task tracking and execution.
 
