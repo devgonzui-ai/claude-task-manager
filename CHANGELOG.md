@@ -5,12 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-01-28
+
+### Removed
+- `hooks` command and related functionality
+- HooksManager.ts module
+- All hooks-related i18n translations
+
+### Changed
+- Removed hooks integration from TaskManager.ts
+- Updated README and README.ja.md to remove hooks documentation
+
+### Reason for Removal
+Claude Code's hooks system underwent a breaking format change. The old hooks system supported CLI command-based hooks (e.g., `postExec`), but the new system only supports tool-based hooks (PreToolUse, PostToolUse, etc.). Since claude-task-manager's hooks were designed to run after CLI commands (like `claude-task run`, `claude-task new`), they are no longer compatible with the new hooks format. Users who need similar functionality should configure hooks manually using the new format in `.claude/settings.json`.
+
 ## [1.1.0] - 2026-01-24
 
 ### Added
 - `progress` command to track subtask completion with visual progress bar
 - `split` command to automatically break down tasks into subtasks using AI (Claude CLI)
-- `hooks` command to configure Claude Code hooks for task automation
 - 60-second timeout for Claude CLI calls in split command
 
 ### Changed
@@ -22,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CustomCommandGenerator.ts - Custom command generation
   - ProgressTracker.ts - Progress tracking
   - TaskSplitter.ts - AI-powered task splitting
-  - HooksManager.ts - Claude Code hooks management
 - Updated Node.js requirement to >= 18.0.0
 - Improved type safety: Replaced `any` types with proper types
 - Made `setLanguage` method async for consistency

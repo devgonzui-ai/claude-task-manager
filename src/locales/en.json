@@ -58,11 +58,6 @@
       "analyzing": "🔍 Analyzing task...",
       "success": "✅ Task split into {{count}} subtasks",
       "error": "❌ Failed to split task: {{error}}"
-    },
-    "hooks": {
-      "description": "Setup Claude Code hooks for task events",
-      "success": "✅ Hooks configured in .claude/hooks/",
-      "error": "❌ Failed to setup hooks: {{error}}"
     }
   },
   "errors": {

@@ -17,7 +17,6 @@ A powerful task management extension for Claude Code that automates task trackin
 - 🎯 **Custom Commands**: Automatically creates `/task` custom command for Claude Code
 - 📈 **Progress Tracking**: Visual progress bar for subtask completion
 - 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
-- 🔗 **Hooks Integration**: Configure Claude Code hooks for task automation
 
 ## Installation
 
@@ -121,19 +120,6 @@ Uses Claude AI to automatically break down your current task into actionable sub
 
 Options:
 - `--count`: Specify the number of subtasks to generate (default: 3-7)
-
-### Configure Hooks
-```bash
-claude-task hooks
-claude-task hooks --status
-```
-
-Sets up Claude Code hooks for task automation. After setup, the following hooks are configured:
-- After `claude-task run`: Logs completion timestamp
-- After `claude-task new`: Shows task progress
-- After `claude-task archive`: Shows task status
-
-Use `--status` to check current hooks configuration.
 
 ### Direct Claude Code Execution
 ```bash
@@ -325,7 +311,6 @@ Contributions are welcome!
 ### v1.1.0 (2026-01-24)
 - Feature: Add `progress` command for visual subtask completion tracking
 - Feature: Add `split` command to auto-generate subtasks using Claude AI
-- Feature: Add `hooks` command for Claude Code hooks integration
 - Refactor: Split TaskManager.ts into focused modules for better maintainability
 - Improved: Node.js requirement updated to >= 18.0.0
 - Improved: Better type safety with proper TypeScript types

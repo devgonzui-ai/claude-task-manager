@@ -58,11 +58,6 @@
       "analyzing": "🔍 タスクを分析中...",
       "success": "✅ タスクを{{count}}個のサブタスクに分割しました",
       "error": "❌ タスクの分割に失敗しました: {{error}}"
-    },
-    "hooks": {
-      "description": "タスクイベント用のClaude Codeフックを設定",
-      "success": "✅ フックを.claude/hooks/に設定しました",
-      "error": "❌ フックの設定に失敗しました: {{error}}"
     }
   },
   "errors": {
