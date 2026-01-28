@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Removed hooks integration from TaskManager.ts
 - Updated README and README.ja.md to remove hooks documentation
+- Increased split command timeout from 60 seconds to 5 minutes
+
+### Fixed
+- Split command now passes prompt via stdin instead of command-line argument for proper Claude CLI compatibility
+- Improved error message for Claude API limit - now shows clear message when limit is reached
 
 ### Reason for Removal
 Claude Code's hooks system underwent a breaking format change. The old hooks system supported CLI command-based hooks (e.g., `postExec`), but the new system only supports tool-based hooks (PreToolUse, PostToolUse, etc.). Since claude-task-manager's hooks were designed to run after CLI commands (like `claude-task run`, `claude-task new`), they are no longer compatible with the new hooks format. Users who need similar functionality should configure hooks manually using the new format in `.claude/settings.json`.
