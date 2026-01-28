@@ -92,16 +92,29 @@ Subtask description 3
         shell: false
       });
 
-      // Write prompt to stdin
-      claudeProcess.stdin.write(prompt);
-      claudeProcess.stdin.end();
-
-      // Set timeout
+      // Set timeout first
       const timeoutId = setTimeout(() => {
         timedOut = true;
         claudeProcess.kill('SIGTERM');
         reject(new Error(`Claude CLI timed out after ${timeoutMs / 1000} seconds`));
       }, timeoutMs);
+
+      // Handle stdin errors
+      claudeProcess.stdin.on('error', (err) => {
+        clearTimeout(timeoutId);
+        if (timedOut) return;
+        reject(new Error(`Stdin error: ${err.message}`));
+      });
+
+      // Write prompt to stdin
+      try {
+        claudeProcess.stdin.write(prompt);
+        claudeProcess.stdin.end();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        reject(new Error(`Failed to write to stdin: ${err instanceof Error ? err.message : String(err)}`));
+        return;
+      }
 
       claudeProcess.stdout.on('data', (data) => {
         stdout += data.toString();
