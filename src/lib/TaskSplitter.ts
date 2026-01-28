@@ -81,7 +81,7 @@ Subtask description 3
 
   private async callClaude(prompt: string, timeoutMs: number = 60000): Promise<string> {
     return new Promise((resolve, reject) => {
-      const args = ['-p', prompt];
+      const args = ['-p'];
 
       let stdout = '';
       let stderr = '';
@@ -91,6 +91,10 @@ Subtask description 3
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: false
       });
+
+      // Write prompt to stdin
+      claudeProcess.stdin.write(prompt);
+      claudeProcess.stdin.end();
 
       // Set timeout
       const timeoutId = setTimeout(() => {
