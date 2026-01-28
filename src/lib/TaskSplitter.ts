@@ -131,13 +131,18 @@ Subtask description 3
         if (code === 0) {
           resolve(stdout.trim());
         } else {
-          reject(new Error(`Claude failed with code ${code}: ${stderr}`));
+          // Check for API limit error
+          if (stdout.includes('hit your limit') || stdout.includes('limit')) {
+            reject(new Error(`Claude API limit reached. Please wait until the limit resets (usually 6pm local time).`));
+          } else {
+            reject(new Error(`Claude failed with code ${code}: ${stderr || stdout}`));
+          }
         }
       });
 
       claudeProcess.on('error', (error) => {
         clearTimeout(timeoutId);
-        if (timedOut) return; // Already rejected
+        if (timedOut) return;
         reject(new Error(`Failed to start Claude: ${error.message}`));
       });
     });

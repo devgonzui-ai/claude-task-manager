@@ -1,2 +1,22 @@
+
+> @gonzui/claude-task-manager@1.1.0 dev
+> ts-node src/bin/claude-task.ts split
+
 🔍 タスクを分析中...
+[DEBUG] Spawning claude with args: [ '-p' ]
+[DEBUG] Prompt length: 497
+[DEBUG] Prompt preview: Analyze this task and break it down into 3-7 actionable subtasks.
+
+Task Title: テスト用のタスクを５つ用意する
+Descr...
+[DEBUG] Claude process PID: 614183
+[DEBUG] Writing prompt to stdin...
+[DEBUG] Prompt written successfully
+[DEBUG] stdout received: You've hit your limit · resets 6pm (Asia/Tokyo)
+...
+[DEBUG] Process closed with code: 1
+[DEBUG] stdout length: 48
+[DEBUG] stderr length: 0
+[DEBUG] stderr content: 
+[DEBUG] Rejecting with error
 ❌ タスクの分割に失敗しました: Claude failed with code 1: 
