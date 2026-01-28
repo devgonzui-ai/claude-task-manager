@@ -322,7 +322,7 @@ Contributions are welcome!
 
 ## Changelog
 
-### v1.1.0 (2025-01-24)
+### v1.1.0 (2026-01-24)
 - Feature: Add `progress` command for visual subtask completion tracking
 - Feature: Add `split` command to auto-generate subtasks using Claude AI
 - Feature: Add `hooks` command for Claude Code hooks integration

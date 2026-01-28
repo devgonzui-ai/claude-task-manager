@@ -27,3 +27,10 @@ task.*.md
 
 # Claude Code custom commands (if you want to exclude them)
 # .claude/commands/task.md
+#
+.agent/
+.agents/
+.kiro/
+.gemini
+.github/skills/
+article
