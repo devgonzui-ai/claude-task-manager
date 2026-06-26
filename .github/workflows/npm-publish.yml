@@ -25,12 +25,13 @@ jobs:
         uses: actions/checkout@v4
 
       # Node.js環境のセットアップ
-      # 注意: registry-url は指定しない。指定すると空トークンの .npmrc が作られ、
-      # npm が OIDC Trusted Publishing に切り替わらず token 認証(空)で失敗する。
+      # Trusted Publishing には registry-url が必須（公式手順）。トークンは不要。
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       # 依存関係のインストール（package-lock.jsonを使用、ランナー標準のnpmで）
       - name: Install dependencies
