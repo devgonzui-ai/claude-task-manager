@@ -17,6 +17,19 @@ const program = new Command();
 const taskManager = new TaskManager();
 const i18n = I18n.getInstance();
 
+// Initialize i18n synchronously at startup so command descriptions are
+// localized in --help. Commander builds these at module load, before the
+// async preAction hook (initI18n) ever runs.
+try {
+  i18n.initSync(taskManager.getLanguageSync());
+} catch {
+  try {
+    i18n.initSync('en');
+  } catch {
+    // Locales unavailable; t() will fall back to returning keys.
+  }
+}
+
 // Initialize i18n with system or config language
 async function initI18n() {
   try {
@@ -179,8 +192,10 @@ program
   .description(i18n.t('commands.claude.description'))
   .action(async (promptParts: string[]) => {
     try {
+      console.log(chalk.yellow(i18n.t('commands.claude.deprecated')));
+
       const prompt = promptParts.join(' ');
-      
+
       if (!prompt) {
         // No prompt provided, just show task content
         console.log(chalk.blue('📋 Executing task with Claude Code...'));
@@ -240,6 +255,38 @@ program
   .action(async () => {
     try {
       const result = await taskManager.getProgress();
+      console.log(taskManager.formatProgress(result));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('done <numbers...>')
+  .description(i18n.t('commands.done.description'))
+  .option('-u, --undo', 'Uncheck the given subtasks instead of completing them')
+  .action(async (numbers: string[], options) => {
+    try {
+      const indices = numbers
+        .map((n) => parseInt(n, 10))
+        .filter((n) => !Number.isNaN(n));
+
+      if (indices.length === 0) {
+        console.log(chalk.red(i18n.t('commands.done.noNumbers')));
+        return;
+      }
+
+      const completed = !options.undo;
+      const { updated, invalid, result } = await taskManager.setTaskCompletion(indices, completed);
+
+      if (updated.length > 0) {
+        const key = completed ? 'commands.done.success' : 'commands.done.undone';
+        console.log(chalk.green(i18n.t(key, { numbers: updated.join(', ') })));
+      }
+      if (invalid.length > 0) {
+        console.log(chalk.yellow(i18n.t('commands.done.invalid', { numbers: invalid.join(', ') })));
+      }
+      console.log('');
       console.log(taskManager.formatProgress(result));
     } catch (error) {
       handleError(error);

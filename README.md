@@ -110,6 +110,16 @@ Progress: [████████░░░░░░░░░░░░] 40%
 Completed: 2/5 tasks
 ```
 
+### Complete Subtasks
+```bash
+claude-task done 1 3      # mark subtasks 1 and 3 as done
+claude-task done --undo 1 # uncheck subtask 1
+```
+
+Marks subtasks complete (or, with `--undo`, incomplete) by their number. The
+numbers match the order shown by `claude-task progress`, and the updated
+progress bar is printed afterwards.
+
 ### Split Task into Subtasks
 ```bash
 claude-task split
@@ -121,15 +131,25 @@ Uses Claude AI to automatically break down your current task into actionable sub
 Options:
 - `--count`: Specify the number of subtasks to generate (default: 3-7)
 
-### Direct Claude Code Execution
+### Direct Claude Code Execution (deprecated)
 ```bash
 claude-task claude "Review and optimize the database schema"
 ```
 
+> **Deprecated:** `claude` only prints the task content. Use `claude-task run`
+> to actually execute the current task with Claude Code.
+
 ## Claude Code Integration
 
-### Custom Command
-After running `claude-task init` in a project with `.claude/commands/` directory, a custom `/task` command is automatically created. This allows you to use the following commands directly within Claude Code:
+### Custom Command & Skill
+After running `claude-task init` in a project that has a `.claude/` directory,
+two integrations are generated automatically:
+
+- A `/task` **slash command** at `.claude/commands/task.md`
+- A **Skill** at `.claude/skills/task/SKILL.md`, so newer Claude Code versions
+  can discover task management on their own.
+
+The `/task` command lets you use the following directly within Claude Code:
 
 #### Available Commands
 

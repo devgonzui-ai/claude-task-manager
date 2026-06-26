@@ -49,7 +49,7 @@ export class TaskManager {
     this.claudeExecutor = new ClaudeExecutor(this.config.taskFile);
     this.historyManager = new HistoryManager(this.config.taskFile, this.config.archiveDir, this.i18n);
     this.customCommandGenerator = new CustomCommandGenerator(this.config.workingDir, this.i18n);
-    this.progressTracker = new ProgressTracker(this.config.taskFile);
+    this.progressTracker = new ProgressTracker(this.config.taskFile, this.i18n);
     this.taskSplitter = new TaskSplitter(this.config.taskFile, this.i18n);
 
     if (!this.i18n.isInitialized()) {
@@ -113,6 +113,7 @@ export class TaskManager {
       }
 
       await this.customCommandGenerator.createClaudeCustomCommand();
+      await this.customCommandGenerator.createClaudeSkill();
       await this.updateGitignore();
     } catch (error) {
       throw new FileSystemError(
@@ -138,7 +139,11 @@ export class TaskManager {
         await this.archiveCurrentTask();
       }
 
-      const title = options.title || `Task ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
+      const config = await this.configManager.getConfig();
+      const title =
+        options.title ||
+        config.defaultTaskTitle ||
+        `Task ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
       const description = options.description || '';
 
       await this.createTaskFile(title, description, options);
@@ -193,6 +198,24 @@ export class TaskManager {
     return config.language || 'en';
   }
 
+  /**
+   * Synchronous language lookup for early startup (e.g. localizing --help).
+   * Falls back to the environment-detected language when no config is present.
+   */
+  getLanguageSync(): Language {
+    try {
+      if (fs.existsSync(this.config.configFile)) {
+        const config = fs.readJsonSync(this.config.configFile) as TaskConfig;
+        if (config.language) {
+          return config.language;
+        }
+      }
+    } catch {
+      // Ignore and fall through to environment detection
+    }
+    return this.configManager.detectInitialLanguage();
+  }
+
   async setLanguage(lang: Language): Promise<void> {
     await this.configManager.updateConfig(
       { language: lang },
@@ -206,6 +229,13 @@ export class TaskManager {
 
   formatProgress(result: ProgressResult): string {
     return this.progressTracker.formatOutput(result);
+  }
+
+  async setTaskCompletion(
+    indices: number[],
+    completed: boolean
+  ): Promise<{ updated: number[]; invalid: number[]; result: ProgressResult }> {
+    return await this.progressTracker.setCompletion(indices, completed);
   }
 
   async splitTask(count?: number): Promise<SplitResult> {

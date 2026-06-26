@@ -4,6 +4,7 @@
       "description": "現在のディレクトリでタスク管理を初期化",
       "success": "✅ タスクマネージャーを初期化しました",
       "customCommand": "✅ Claude Code カスタムコマンド /task を作成しました",
+      "skill": "✅ Claude Code スキルを作成しました: .claude/skills/task/SKILL.md",
       "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました"
     },
     "new": {
@@ -36,6 +37,7 @@
     },
     "claude": {
       "description": "プロンプトを直接Claude Codeで実行",
+      "deprecated": "⚠️  'claude' は非推奨で、タスク内容を表示するだけです。タスクをClaude Codeで実行するには 'claude-task run' を使ってください。",
       "error": "❌ Claude実行に失敗しました: {{error}}"
     },
     "lang": {
@@ -51,6 +53,8 @@
     },
     "progress": {
       "description": "サブタスクの進捗を表示",
+      "title": "📊 タスク進捗:",
+      "count": "({{completed}}/{{total}} 件)",
       "noTasks": "サブタスクが見つかりません。チェックボックスを追加してください:\n  - [ ] 未完了のタスク\n  - [x] 完了したタスク"
     },
     "split": {
@@ -58,6 +62,13 @@
       "analyzing": "🔍 タスクを分析中...",
       "success": "✅ タスクを{{count}}個のサブタスクに分割しました",
       "error": "❌ タスクの分割に失敗しました: {{error}}"
+    },
+    "done": {
+      "description": "サブタスクを番号で完了にする（--undo で未完了に戻す）",
+      "success": "✅ サブタスクを完了にしました: {{numbers}}",
+      "undone": "↩️  サブタスクを未完了に戻しました: {{numbers}}",
+      "invalid": "⚠️  その番号のサブタスクはありません: {{numbers}}",
+      "noNumbers": "❌ サブタスク番号を1つ以上指定してください。例: 'claude-task done 1 2'"
     }
   },
   "errors": {

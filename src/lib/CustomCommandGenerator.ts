@@ -30,126 +30,110 @@ export class CustomCommandGenerator {
     }
   }
 
+  /**
+   * Create a Claude Code Skill (.claude/skills/task/SKILL.md) so newer Claude
+   * Code versions can discover task management automatically. Created only when
+   * a .claude directory already exists, mirroring the slash command behavior.
+   */
+  async createClaudeSkill(): Promise<void> {
+    const claudeDir = path.join(this.workingDir, '.claude');
+    const skillDir = path.join(claudeDir, 'skills', 'task');
+
+    try {
+      if (await fs.pathExists(claudeDir)) {
+        await fs.ensureDir(skillDir);
+
+        const skillPath = path.join(skillDir, 'SKILL.md');
+        await fs.writeFile(skillPath, this.generateSkillContent());
+        console.log(this.i18n.t('commands.init.skill'));
+      }
+    } catch (error) {
+      console.warn('Could not create Claude skill:', error);
+    }
+  }
+
+  private generateSkillContent(): string {
+    return `---
+name: task
+description: Manage development tasks with the claude-task CLI. Use when the user wants to create, run, track, split, complete, or archive tasks, or asks about the current task / task progress. Tasks live in task.md.
+metadata:
+  source: claude-task-manager
+---
+
+# Task Management (claude-task)
+
+This skill drives the \`claude-task\` CLI, which manages a \`task.md\` file and an
+\`archive/\` history. Run the commands below with the Bash tool and report the
+output back to the user.
+
+## When to use
+
+- The user wants to start, track, or finish a unit of work.
+- The user asks "what's the current task?", "how far along am I?", or similar.
+- The user mentions task.md, subtasks, or task history.
+
+## Commands
+
+| Intent | Command |
+| --- | --- |
+| Create a task | \`claude-task new "<title>" [--priority high|medium|low] [--tags a,b]\` |
+| Show current task / counts | \`claude-task status\` |
+| Show subtask progress bar | \`claude-task progress\` |
+| Complete subtask(s) | \`claude-task done <n> [<n> ...]\` (use \`--undo\` to uncheck) |
+| Split a task into subtasks (AI) | \`claude-task split [-c <count>]\` |
+| Show history | \`claude-task history [--limit <n>]\` |
+| Archive current task | \`claude-task archive\` |
+
+## Executing a task
+
+To actually do the work described in the current task, read \`@task.md\` and carry
+out the steps yourself. \`claude-task run\` exists, but inside a Claude Code session
+prefer reading \`@task.md\` directly and editing the relevant files. As you finish
+each subtask, mark it complete with \`claude-task done <n>\`.
+
+## Notes
+
+- Quote titles that contain spaces.
+- Subtask numbers in \`done\` match the order shown by \`claude-task progress\`.
+- Only one task is active at a time; creating a new task archives the previous one.
+`;
+  }
+
   private generateCustomCommandContent(): string {
-    return `# /task - Claude Task Manager
+    return `---
+description: Manage tasks with the claude-task CLI
+argument-hint: <new|status|progress|done|split|history|archive|run> [options]
+allowed-tools: Bash(claude-task:*), Read, Edit
+---
 
-Task management custom command for Claude Code.
+# /task — Claude Task Manager
 
-## Usage
-
-\`/task <action> [options]\`
+The user ran: \`/task $ARGUMENTS\`
 
 ## Actions
 
-### Create New Task
-\`/task new "<task name>" [--priority high|medium|low] [--tags tag1,tag2]\`
+- \`/task new "<title>" [--priority high|medium|low] [--tags a,b]\` — create a task
+- \`/task status\` — show the current task and counts
+- \`/task progress\` — show the subtask progress bar
+- \`/task done <numbers...>\` — mark subtasks done (\`--undo\` to uncheck)
+- \`/task split [--count n]\` — break the task into subtasks (uses AI)
+- \`/task history [--limit n]\` — show task history
+- \`/task archive\` — archive the current task
+- \`/task run\` — execute the current task
 
-Creates a task and saves it to task.md file.
+## How to handle this invocation
 
-### Check Current Task
-\`/task status\`
+Pass arguments through **verbatim** — never rewrite, reorder, or drop flags.
 
-Shows current task and its progress.
+- **run** (or no argument): do NOT shell out to \`claude-task run\`. Instead read
+  the current \`task.md\`, carry out the work yourself, and mark each subtask done
+  with \`claude-task done <n>\` as you finish it.
+- **split**: run \`claude-task split $ARGUMENTS\`. It calls Claude in the
+  background to generate subtasks, so it may take a moment — this is expected.
+- **everything else** (new / status / progress / done / history / archive): run
+  \`claude-task $ARGUMENTS\` with the Bash tool and report the output to the user.
 
-### Execute Task
-\`/task run\`
-
-Executes current task with Claude Code using task.md content as context.
-
-### Task History
-\`/task history [--limit n]\`
-
-Shows past and archived tasks.
-
-### Archive Task
-\`/task archive\`
-
-Moves completed task to archive folder.
-
-## Implementation
-
-This command uses the \`claude-task\` CLI tool for task management.
-
-### How to Process Commands
-
-**IMPORTANT**: Follow these instructions to execute actual CLI commands using the Bash tool.
-
-1. When \`/task new "task name"\` is executed:
-   \`\`\`bash
-   claude-task new "task name"
-   \`\`\`
-   - Execute this command using the Bash tool
-   - Pass optional arguments appropriately (e.g., \`--priority high --tags auth,backend\`)
-
-2. When \`/task status\` is executed:
-   \`\`\`bash
-   claude-task status
-   \`\`\`
-   - Execute this command using the Bash tool
-
-3. When \`/task run\` is executed:
-   - Reference the \`@task.md\` file content
-   - Execute work according to the task content
-
-4. When \`/task history\` is executed:
-   \`\`\`bash
-   claude-task history
-   \`\`\`
-   - Execute this command using the Bash tool
-   - Add \`--limit\` option if provided
-
-5. When \`/task archive\` is executed:
-   \`\`\`bash
-   claude-task archive
-   \`\`\`
-   - Execute this command using the Bash tool
-
-### Process Flow
-
-\`\`\`
-User: /task new "Implement new feature"
-↓
-Claude: Execute \`claude-task new "Implement new feature"\` using Bash tool
-↓
-Display result
-\`\`\`
-
-## Examples
-
-1. Create new task:
-   \`\`\`
-   /task new "Implement user authentication" --priority high --tags auth,backend
-   \`\`\`
-   -> Execute with Bash: \`claude-task new "Implement user authentication" --priority high --tags auth,backend\`
-
-2. Check current task:
-   \`\`\`
-   /task status
-   \`\`\`
-   -> Execute with Bash: \`claude-task status\`
-
-3. Execute task:
-   \`\`\`
-   /task run
-   \`\`\`
-   -> Reference @task.md and execute work according to content
-
-4. View task history:
-   \`\`\`
-   /task history --limit 10
-   \`\`\`
-   -> Execute with Bash: \`claude-task history --limit 10\`
-
-5. Archive completed task:
-   \`\`\`
-   /task archive
-   \`\`\`
-   -> Execute with Bash: \`claude-task archive\`
-
-## Important Notes
-
-- **All commands must be executed using the Bash tool to run actual \`claude-task\` CLI commands**
-- Task names with spaces must be enclosed in quotes
-- Only \`/task run\` requires special processing (reference @task.md and execute)`;
+Quote titles that contain spaces. Subtask numbers for \`done\` match the order
+shown by \`/task progress\`.`;
   }
 }

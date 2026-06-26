@@ -4,6 +4,7 @@
       "description": "Initialize task management in current directory",
       "success": "✅ Task manager initialized successfully",
       "customCommand": "✅ Created Claude Code custom command /task",
+      "skill": "✅ Created Claude Code skill at .claude/skills/task/SKILL.md",
       "gitignoreUpdated": "✅ Updated .gitignore with task-related entries"
     },
     "new": {
@@ -36,6 +37,7 @@
     },
     "claude": {
       "description": "Execute prompt directly with Claude Code",
+      "deprecated": "⚠️  'claude' is deprecated and only prints the task. Use 'claude-task run' to execute the task with Claude Code.",
       "error": "❌ Claude execution failed: {{error}}"
     },
     "lang": {
@@ -51,6 +53,8 @@
     },
     "progress": {
       "description": "Show subtask progress",
+      "title": "📊 Task Progress:",
+      "count": "({{completed}}/{{total}} tasks)",
       "noTasks": "No subtasks found. Add checkboxes like:\n  - [ ] Task to do\n  - [x] Completed task"
     },
     "split": {
@@ -58,6 +62,13 @@
       "analyzing": "🔍 Analyzing task...",
       "success": "✅ Task split into {{count}} subtasks",
       "error": "❌ Failed to split task: {{error}}"
+    },
+    "done": {
+      "description": "Mark subtask(s) as done by number (use --undo to uncheck)",
+      "success": "✅ Marked subtask(s) as done: {{numbers}}",
+      "undone": "↩️  Unchecked subtask(s): {{numbers}}",
+      "invalid": "⚠️  No subtask at number(s): {{numbers}}",
+      "noNumbers": "❌ Please provide at least one subtask number, e.g. 'claude-task done 1 2'"
     }
   },
   "errors": {

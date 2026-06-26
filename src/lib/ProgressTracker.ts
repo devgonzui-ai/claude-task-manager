@@ -1,5 +1,6 @@
 import * as fs from 'fs-extra';
 import chalk from 'chalk';
+import { I18n } from './i18n';
 
 export interface TaskItem {
   text: string;
@@ -16,9 +17,11 @@ export interface ProgressResult {
 
 export class ProgressTracker {
   private taskFile: string;
+  private i18n: I18n;
 
-  constructor(taskFile: string) {
+  constructor(taskFile: string, i18n: I18n) {
     this.taskFile = taskFile;
+    this.i18n = i18n;
   }
 
   async getProgress(): Promise<ProgressResult> {
@@ -28,6 +31,44 @@ export class ProgressTracker {
 
     const content = await fs.readFile(this.taskFile, 'utf8');
     return this.parseProgress(content);
+  }
+
+  /**
+   * Mark the given 1-based checkbox numbers (matching `progress` output order)
+   * as completed or pending and persist the change to task.md.
+   */
+  async setCompletion(
+    indices: number[],
+    completed: boolean
+  ): Promise<{ updated: number[]; invalid: number[]; result: ProgressResult }> {
+    if (!await fs.pathExists(this.taskFile)) {
+      throw new Error('No task.md file found');
+    }
+
+    const content = await fs.readFile(this.taskFile, 'utf8');
+    const mark = completed ? 'x' : ' ';
+    const requested = new Set(indices);
+    const updated: number[] = [];
+
+    let counter = 0;
+    const checkboxLine = /^([ \t]*-\s+\[)([ xX])(\]\s+.+)$/gm;
+    const newContent = content.replace(checkboxLine, (full, pre, _state, post) => {
+      counter += 1;
+      if (requested.has(counter)) {
+        updated.push(counter);
+        return `${pre}${mark}${post}`;
+      }
+      return full;
+    });
+
+    const total = counter;
+    const invalid = indices.filter((n) => n < 1 || n > total);
+
+    if (updated.length > 0) {
+      await fs.writeFile(this.taskFile, newContent);
+    }
+
+    return { updated, invalid, result: this.parseProgress(newContent) };
   }
 
   private parseProgress(content: string): ProgressResult {
@@ -71,13 +112,11 @@ export class ProgressTracker {
     const lines: string[] = [];
 
     // Header
-    lines.push(chalk.blue(`📊 Task Progress: ${result.title}`));
+    lines.push(chalk.blue(`${this.i18n.t('commands.progress.title')} ${result.title}`));
     lines.push('');
 
     if (result.total === 0) {
-      lines.push(chalk.yellow('No subtasks found. Add checkboxes like:'));
-      lines.push(chalk.gray('  - [ ] Task to do'));
-      lines.push(chalk.gray('  - [x] Completed task'));
+      lines.push(chalk.yellow(this.i18n.t('commands.progress.noTasks')));
       return lines.join('\n');
     }
 
@@ -85,7 +124,11 @@ export class ProgressTracker {
     const bar = this.formatProgressBar(result.percentage);
     const percentColor = result.percentage === 100 ? chalk.green :
                          result.percentage >= 50 ? chalk.yellow : chalk.red;
-    lines.push(`${bar} ${percentColor(`${result.percentage}%`)} (${result.completed}/${result.total} tasks)`);
+    const count = this.i18n.t('commands.progress.count', {
+      completed: result.completed,
+      total: result.total
+    });
+    lines.push(`${bar} ${percentColor(`${result.percentage}%`)} ${count}`);
     lines.push('');
 
     // Task list

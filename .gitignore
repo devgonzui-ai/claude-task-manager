@@ -21,6 +21,9 @@ coverage/
 
 # Claude Task Manager
 
+# Internal/private working notes (not for publication)
+tmp/
+
 # Temporary task files
 *.tmp.md
 task.*.md

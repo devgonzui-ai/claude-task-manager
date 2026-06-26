@@ -76,7 +76,44 @@ describe('Claude Task CLI', () => {
       expect(result.stdout).toContain('✅');
       
       // Check if custom command was created
-      expect(await fs.pathExists(path.join(tempDir, '.claude/commands/task.md'))).toBe(true);
+      const commandPath = path.join(tempDir, '.claude/commands/task.md');
+      expect(await fs.pathExists(commandPath)).toBe(true);
+
+      // The slash command should document the full command set, in sync with the skill.
+      const command = await fs.readFile(commandPath, 'utf8');
+      for (const action of ['new', 'status', 'run', 'history', 'archive', 'progress', 'done', 'split']) {
+        expect(command).toContain(`/task ${action}`);
+      }
+
+      // Modern slash-command structure: frontmatter + argument passthrough.
+      expect(command).toMatch(/^---\n/);
+      expect(command).toContain('description:');
+      expect(command).toContain('argument-hint:');
+      expect(command).toContain('allowed-tools:');
+      expect(command).toContain('$ARGUMENTS');
+    });
+
+    it('should create a Claude Code skill when .claude exists', async () => {
+      await fs.ensureDir(path.join(tempDir, '.claude'));
+
+      const result = await runCLI(['init'], tempDir);
+
+      expect(result.code).toBe(0);
+      const skillPath = path.join(tempDir, '.claude/skills/task/SKILL.md');
+      expect(await fs.pathExists(skillPath)).toBe(true);
+
+      const skill = await fs.readFile(skillPath, 'utf8');
+      // Valid skill frontmatter with name + description.
+      expect(skill).toMatch(/^---\n/);
+      expect(skill).toContain('name: task');
+      expect(skill).toContain('description:');
+    });
+
+    it('should not create command or skill when .claude is absent', async () => {
+      const result = await runCLI(['init'], tempDir);
+
+      expect(result.code).toBe(0);
+      expect(await fs.pathExists(path.join(tempDir, '.claude'))).toBe(false);
     });
 
     it('should update existing .gitignore without duplicates', async () => {
