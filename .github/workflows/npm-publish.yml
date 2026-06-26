@@ -2,6 +2,11 @@ name: Publish to npm
 
 # このワークフローはタグがpushされた時に実行されます
 # 例: git tag v1.0.0 && git push origin v1.0.0
+#
+# 公開は npm Trusted Publishing (OIDC) を使用します。長期トークン(NPM_TOKEN)は不要です。
+# 事前に npmjs.com のパッケージ設定で Trusted Publisher を登録してください:
+#   - Repository: devgonzui-ai/claude-task-manager
+#   - Workflow filename: npm-publish.yml
 on:
   push:
     tags:
@@ -11,58 +16,59 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # リリース作成に必要
-      packages: write
-    
+      contents: write   # リリース作成に必要
+      id-token: write   # npm Trusted Publishing (OIDC) に必要
+
     steps:
       # リポジトリのコードをチェックアウト
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       # Node.js環境のセットアップ
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'  # npm公開用のレジストリ設定
-          
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted Publishing (OIDC) に対応した npm へ更新 (>= 11.5.1)
+      - name: Update npm
+        run: npm install -g npm@latest
+
       # 依存関係のインストール（package-lock.jsonを使用）
       - name: Install dependencies
         run: npm ci
-        
+
       # テストの実行
       - name: Run tests
         run: npm run test:ci
-        
+
       # TypeScriptのビルド
       - name: Build
         run: npm run build
-        
+
       # タグとpackage.jsonのバージョンが一致しているか確認
       - name: Verify version match
         run: |
           # タグからバージョンを取得（v1.0.0 -> 1.0.0）
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          
+
           # package.jsonのバージョンを取得
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          
+
           # バージョンが一致しているか確認
           if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
             echo "Error: Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
             echo "Please ensure the tag matches the version in package.json"
             exit 1
           fi
-          
+
           echo "Version check passed: $TAG_VERSION"
-          
-      # npmへの公開
-      # 注意: NPM_TOKEN をGitHub Secretsに設定する必要があります
+
+      # npmへの公開（OIDC Trusted Publishing。トークン不要、provenance自動付与）
       - name: Publish to npm
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
+
       # リリースノートの作成（オプション）
       - name: Create Release
         uses: softprops/action-gh-release@v1
