@@ -49,7 +49,7 @@ export class TaskManager {
     this.claudeExecutor = new ClaudeExecutor(this.config.taskFile);
     this.historyManager = new HistoryManager(this.config.taskFile, this.config.archiveDir, this.i18n);
     this.customCommandGenerator = new CustomCommandGenerator(this.config.workingDir, this.i18n);
-    this.progressTracker = new ProgressTracker(this.config.taskFile);
+    this.progressTracker = new ProgressTracker(this.config.taskFile, this.i18n);
     this.taskSplitter = new TaskSplitter(this.config.taskFile, this.i18n);
 
     if (!this.i18n.isInitialized()) {
@@ -191,6 +191,24 @@ export class TaskManager {
   async getLanguage(): Promise<Language> {
     const config = await this.configManager.getConfig();
     return config.language || 'en';
+  }
+
+  /**
+   * Synchronous language lookup for early startup (e.g. localizing --help).
+   * Falls back to the environment-detected language when no config is present.
+   */
+  getLanguageSync(): Language {
+    try {
+      if (fs.existsSync(this.config.configFile)) {
+        const config = fs.readJsonSync(this.config.configFile) as TaskConfig;
+        if (config.language) {
+          return config.language;
+        }
+      }
+    } catch {
+      // Ignore and fall through to environment detection
+    }
+    return this.configManager.detectInitialLanguage();
   }
 
   async setLanguage(lang: Language): Promise<void> {

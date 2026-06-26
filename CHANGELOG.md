@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- `--help` now shows localized command descriptions instead of raw i18n keys (e.g. `commands.init.description`). i18n is now initialized synchronously at startup so descriptions are translated before commander builds the help output.
+- `progress` command output is now fully localized. The header and task count were hardcoded in English; `ProgressTracker` now uses i18n (new `progress.title` / `progress.count` keys) and the previously unused `progress.noTasks` translation.
+
+### Added
+- Tests for the `progress`, `claude`, and `archive` CLI commands.
+- Unit tests for `ProgressTracker` and `TaskSplitter` (the latter mocks the Claude CLI so it never invokes the real binary).
+- Regression tests ensuring `--help` and `progress` output never leak raw i18n keys.
+
 ## [1.1.1] - 2026-01-28
 
 ### Removed

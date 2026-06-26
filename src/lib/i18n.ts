@@ -38,6 +38,19 @@ export class I18n {
     this.initialized = true;
   }
 
+  /**
+   * Synchronous initialization.
+   * Needed so command descriptions are localized in --help, which commander
+   * builds at module load time before any async preAction hook runs.
+   */
+  initSync(lang?: Language): void {
+    if (lang) {
+      this.currentLang = lang;
+    }
+    this.loadMessagesSync();
+    this.initialized = true;
+  }
+
   private async loadMessages(): Promise<void> {
     const filePath = path.join(this.localesDir, `${this.currentLang}.json`);
     try {
@@ -47,6 +60,21 @@ export class I18n {
       if (this.currentLang !== 'en') {
         this.currentLang = 'en';
         await this.loadMessages();
+      } else {
+        throw new Error(`Failed to load language file: ${filePath}`);
+      }
+    }
+  }
+
+  private loadMessagesSync(): void {
+    const filePath = path.join(this.localesDir, `${this.currentLang}.json`);
+    try {
+      this.messages = fs.readJsonSync(filePath);
+    } catch (error) {
+      // Fallback to English if language file not found
+      if (this.currentLang !== 'en') {
+        this.currentLang = 'en';
+        this.loadMessagesSync();
       } else {
         throw new Error(`Failed to load language file: ${filePath}`);
       }

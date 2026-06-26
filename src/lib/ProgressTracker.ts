@@ -1,5 +1,6 @@
 import * as fs from 'fs-extra';
 import chalk from 'chalk';
+import { I18n } from './i18n';
 
 export interface TaskItem {
   text: string;
@@ -16,9 +17,11 @@ export interface ProgressResult {
 
 export class ProgressTracker {
   private taskFile: string;
+  private i18n: I18n;
 
-  constructor(taskFile: string) {
+  constructor(taskFile: string, i18n: I18n) {
     this.taskFile = taskFile;
+    this.i18n = i18n;
   }
 
   async getProgress(): Promise<ProgressResult> {
@@ -71,13 +74,11 @@ export class ProgressTracker {
     const lines: string[] = [];
 
     // Header
-    lines.push(chalk.blue(`📊 Task Progress: ${result.title}`));
+    lines.push(chalk.blue(`${this.i18n.t('commands.progress.title')} ${result.title}`));
     lines.push('');
 
     if (result.total === 0) {
-      lines.push(chalk.yellow('No subtasks found. Add checkboxes like:'));
-      lines.push(chalk.gray('  - [ ] Task to do'));
-      lines.push(chalk.gray('  - [x] Completed task'));
+      lines.push(chalk.yellow(this.i18n.t('commands.progress.noTasks')));
       return lines.join('\n');
     }
 
@@ -85,7 +86,11 @@ export class ProgressTracker {
     const bar = this.formatProgressBar(result.percentage);
     const percentColor = result.percentage === 100 ? chalk.green :
                          result.percentage >= 50 ? chalk.yellow : chalk.red;
-    lines.push(`${bar} ${percentColor(`${result.percentage}%`)} (${result.completed}/${result.total} tasks)`);
+    const count = this.i18n.t('commands.progress.count', {
+      completed: result.completed,
+      total: result.total
+    });
+    lines.push(`${bar} ${percentColor(`${result.percentage}%`)} ${count}`);
     lines.push('');
 
     // Task list

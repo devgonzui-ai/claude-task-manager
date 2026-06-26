@@ -17,6 +17,19 @@ const program = new Command();
 const taskManager = new TaskManager();
 const i18n = I18n.getInstance();
 
+// Initialize i18n synchronously at startup so command descriptions are
+// localized in --help. Commander builds these at module load, before the
+// async preAction hook (initI18n) ever runs.
+try {
+  i18n.initSync(taskManager.getLanguageSync());
+} catch {
+  try {
+    i18n.initSync('en');
+  } catch {
+    // Locales unavailable; t() will fall back to returning keys.
+  }
+}
+
 // Initialize i18n with system or config language
 async function initI18n() {
   try {

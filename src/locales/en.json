@@ -51,6 +51,8 @@
     },
     "progress": {
       "description": "Show subtask progress",
+      "title": "📊 Task Progress:",
+      "count": "({{completed}}/{{total}} tasks)",
       "noTasks": "No subtasks found. Add checkboxes like:\n  - [ ] Task to do\n  - [x] Completed task"
     },
     "split": {
