@@ -83,7 +83,58 @@ describe('Claude Task CLI - progress / claude / archive', () => {
     });
   });
 
+  describe('done command', () => {
+    it('should mark subtasks as done and show updated progress', async () => {
+      await writeTask('# Feature\n\n## Tasks\n- [ ] a\n- [ ] b\n- [ ] c\n');
+      const result = await runCLI(['done', '1', '3'], tempDir);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('1, 3');
+      expect(result.stdout).toContain('(2/3 tasks)');
+
+      const content = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
+      expect(content).toContain('- [x] a');
+      expect(content).toContain('- [ ] b');
+      expect(content).toContain('- [x] c');
+    });
+
+    it('should uncheck subtasks with --undo', async () => {
+      await writeTask('# Feature\n\n## Tasks\n- [x] a\n- [x] b\n');
+      const result = await runCLI(['done', '--undo', '1'], tempDir);
+
+      expect(result.code).toBe(0);
+      const content = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
+      expect(content).toContain('- [ ] a');
+      expect(content).toContain('- [x] b');
+    });
+
+    it('should warn about out-of-range subtask numbers', async () => {
+      await writeTask('# Feature\n\n## Tasks\n- [ ] a\n');
+      const result = await runCLI(['done', '9'], tempDir);
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('9');
+      // task.md untouched
+      const content = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
+      expect(content).toContain('- [ ] a');
+    });
+
+    it('should error when no task.md exists', async () => {
+      await fs.remove(path.join(tempDir, 'task.md'));
+      const result = await runCLI(['done', '1'], tempDir);
+      expect(result.code).not.toBe(0);
+      expect(result.stdout + result.stderr).toContain('No task.md file found');
+    });
+  });
+
   describe('claude command', () => {
+    it('should print a deprecation notice pointing to run', async () => {
+      await writeTask('# T\n\n## Tasks\n- [ ] x\n');
+      const result = await runCLI(['claude'], tempDir);
+      expect(result.code).toBe(0);
+      expect(result.stdout.toLowerCase()).toContain('deprecated');
+      expect(result.stdout).toContain('claude-task run');
+    });
+
     it('should print the task content when no prompt is given', async () => {
       await writeTask('# Context Task\n\n## Tasks\n- [ ] something\n');
       const result = await runCLI(['claude'], tempDir);

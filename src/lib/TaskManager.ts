@@ -113,6 +113,7 @@ export class TaskManager {
       }
 
       await this.customCommandGenerator.createClaudeCustomCommand();
+      await this.customCommandGenerator.createClaudeSkill();
       await this.updateGitignore();
     } catch (error) {
       throw new FileSystemError(
@@ -138,7 +139,11 @@ export class TaskManager {
         await this.archiveCurrentTask();
       }
 
-      const title = options.title || `Task ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
+      const config = await this.configManager.getConfig();
+      const title =
+        options.title ||
+        config.defaultTaskTitle ||
+        `Task ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
       const description = options.description || '';
 
       await this.createTaskFile(title, description, options);
@@ -224,6 +229,13 @@ export class TaskManager {
 
   formatProgress(result: ProgressResult): string {
     return this.progressTracker.formatOutput(result);
+  }
+
+  async setTaskCompletion(
+    indices: number[],
+    completed: boolean
+  ): Promise<{ updated: number[]; invalid: number[]; result: ProgressResult }> {
+    return await this.progressTracker.setCompletion(indices, completed);
   }
 
   async splitTask(count?: number): Promise<SplitResult> {

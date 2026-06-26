@@ -62,6 +62,44 @@ describe('TaskManager', () => {
       expect(content).toContain('Test Description');
     });
 
+    it('should use config.defaultTaskTitle when no title is given', async () => {
+      const configFile = path.join(tempDir, '.claude-tasks', 'config.json');
+      const config = await fs.readJson(configFile);
+      config.defaultTaskTitle = 'My Default Title';
+      await fs.writeJson(configFile, config);
+
+      const result = await taskManager.createNewTask({ description: 'no title here' });
+      const content = await fs.readFile(result, 'utf8');
+
+      expect(content).toContain('# My Default Title');
+      expect(content).not.toMatch(/# Task \d{4}-/);
+    });
+
+    it('should fall back to a timestamped title when no title and no default', async () => {
+      const configFile = path.join(tempDir, '.claude-tasks', 'config.json');
+      const config = await fs.readJson(configFile);
+      delete config.defaultTaskTitle;
+      await fs.writeJson(configFile, config);
+
+      const result = await taskManager.createNewTask({});
+      const content = await fs.readFile(result, 'utf8');
+
+      expect(content).toMatch(/# Task \d{4}-\d{2}-\d{2}/);
+    });
+
+    it('should prefer an explicit title over the config default', async () => {
+      const configFile = path.join(tempDir, '.claude-tasks', 'config.json');
+      const config = await fs.readJson(configFile);
+      config.defaultTaskTitle = 'Default';
+      await fs.writeJson(configFile, config);
+
+      const result = await taskManager.createNewTask({ title: 'Explicit' });
+      const content = await fs.readFile(result, 'utf8');
+
+      expect(content).toContain('# Explicit');
+      expect(content).not.toContain('# Default');
+    });
+
     it('should archive existing task before creating new one', async () => {
       // Create first task
       await taskManager.createNewTask({

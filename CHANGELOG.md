@@ -5,16 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-- `--help` now shows localized command descriptions instead of raw i18n keys (e.g. `commands.init.description`). i18n is now initialized synchronously at startup so descriptions are translated before commander builds the help output.
-- `progress` command output is now fully localized. The header and task count were hardcoded in English; `ProgressTracker` now uses i18n (new `progress.title` / `progress.count` keys) and the previously unused `progress.noTasks` translation.
+## [1.2.0] - 2026-06-27
 
 ### Added
-- Tests for the `progress`, `claude`, and `archive` CLI commands.
-- Unit tests for `ProgressTracker` and `TaskSplitter` (the latter mocks the Claude CLI so it never invokes the real binary).
+- `done` command to complete subtasks by number, e.g. `claude-task done 1 3` (use `--undo` to uncheck). Numbers match the order shown by `progress`, and the updated progress bar is printed afterwards. This pairs with `progress`, which previously could read checkboxes but offered no way to toggle them.
+- `claude-task init` now also generates a Claude Code **Skill** at `.claude/skills/task/SKILL.md` (in addition to the `/task` slash command) when a `.claude` directory exists, so newer Claude Code versions can discover task management automatically.
+- Tests for the `progress`, `done`, `claude`, and `archive` CLI commands.
+- Unit tests for `ProgressTracker` (including the new completion toggling) and `TaskSplitter` (the latter mocks the Claude CLI so it never invokes the real binary).
+- Locale parity tests ensuring `en.json` and `ja.json` always define the same keys and never ship empty values.
 - Regression tests ensuring `--help` and `progress` output never leak raw i18n keys.
+
+### Changed
+- The generated `/task` slash command was modernized for accuracy: it now uses Claude Code frontmatter (`description` / `argument-hint` / `allowed-tools`), passes arguments through verbatim via `$ARGUMENTS` instead of asking Claude to re-derive the CLI call, and special-cases `run` / `split` so they don't trigger a nested `claude` invocation. This replaces the long prose template that relied on the model interpreting instructions.
+- The `claude` command is now deprecated. It still prints the task content but shows a notice pointing to `claude-task run`, which actually executes the task with Claude Code.
+
+### Fixed
+- `new` now uses `config.defaultTaskTitle` when no title is given, instead of always falling back to a timestamped `Task <date>` title. The configured default title was previously ignored entirely.
+- `--help` now shows localized command descriptions instead of raw i18n keys (e.g. `commands.init.description`). i18n is now initialized synchronously at startup so descriptions are translated before commander builds the help output.
+- `progress` command output is now fully localized. The header and task count were hardcoded in English; `ProgressTracker` now uses i18n (new `progress.title` / `progress.count` keys) and the previously unused `progress.noTasks` translation.
 
 ## [1.1.1] - 2026-01-28
 

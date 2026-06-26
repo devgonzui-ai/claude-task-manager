@@ -81,6 +81,65 @@ describe('ProgressTracker', () => {
     });
   });
 
+  describe('setCompletion', () => {
+    it('should throw when task.md does not exist', async () => {
+      const tracker = new ProgressTracker(taskFile, i18n);
+      await expect(tracker.setCompletion([1], true)).rejects.toThrow('No task.md file found');
+    });
+
+    it('should mark the given 1-based checkboxes as done', async () => {
+      await write('# T\n- [ ] a\n- [ ] b\n- [ ] c\n');
+      const tracker = new ProgressTracker(taskFile, i18n);
+
+      const { updated, invalid, result } = await tracker.setCompletion([1, 3], true);
+
+      expect(updated).toEqual([1, 3]);
+      expect(invalid).toEqual([]);
+      expect(result.completed).toBe(2);
+
+      const content = await fs.readFile(taskFile, 'utf8');
+      expect(content).toContain('- [x] a');
+      expect(content).toContain('- [ ] b');
+      expect(content).toContain('- [x] c');
+    });
+
+    it('should uncheck boxes when completed is false', async () => {
+      await write('# T\n- [x] a\n- [x] b\n');
+      const tracker = new ProgressTracker(taskFile, i18n);
+
+      const { updated, result } = await tracker.setCompletion([2], false);
+
+      expect(updated).toEqual([2]);
+      expect(result.completed).toBe(1);
+      const content = await fs.readFile(taskFile, 'utf8');
+      expect(content).toContain('- [x] a');
+      expect(content).toContain('- [ ] b');
+    });
+
+    it('should report out-of-range numbers as invalid and not change the file', async () => {
+      await write('# T\n- [ ] a\n- [ ] b\n');
+      const tracker = new ProgressTracker(taskFile, i18n);
+
+      const { updated, invalid } = await tracker.setCompletion([5, 0], true);
+
+      expect(updated).toEqual([]);
+      expect(invalid).toEqual([5, 0]);
+      const content = await fs.readFile(taskFile, 'utf8');
+      expect(content).toContain('- [ ] a');
+      expect(content).toContain('- [ ] b');
+    });
+
+    it('should preserve indentation of nested checkboxes', async () => {
+      await write('# T\n- [ ] a\n  - [ ] nested\n');
+      const tracker = new ProgressTracker(taskFile, i18n);
+
+      await tracker.setCompletion([2], true);
+
+      const content = await fs.readFile(taskFile, 'utf8');
+      expect(content).toContain('  - [x] nested');
+    });
+  });
+
   describe('formatProgressBar', () => {
     it('should render a full bar at 100%', () => {
       const tracker = new ProgressTracker(taskFile, i18n);

@@ -33,6 +33,44 @@ export class ProgressTracker {
     return this.parseProgress(content);
   }
 
+  /**
+   * Mark the given 1-based checkbox numbers (matching `progress` output order)
+   * as completed or pending and persist the change to task.md.
+   */
+  async setCompletion(
+    indices: number[],
+    completed: boolean
+  ): Promise<{ updated: number[]; invalid: number[]; result: ProgressResult }> {
+    if (!await fs.pathExists(this.taskFile)) {
+      throw new Error('No task.md file found');
+    }
+
+    const content = await fs.readFile(this.taskFile, 'utf8');
+    const mark = completed ? 'x' : ' ';
+    const requested = new Set(indices);
+    const updated: number[] = [];
+
+    let counter = 0;
+    const checkboxLine = /^([ \t]*-\s+\[)([ xX])(\]\s+.+)$/gm;
+    const newContent = content.replace(checkboxLine, (full, pre, _state, post) => {
+      counter += 1;
+      if (requested.has(counter)) {
+        updated.push(counter);
+        return `${pre}${mark}${post}`;
+      }
+      return full;
+    });
+
+    const total = counter;
+    const invalid = indices.filter((n) => n < 1 || n > total);
+
+    if (updated.length > 0) {
+      await fs.writeFile(this.taskFile, newContent);
+    }
+
+    return { updated, invalid, result: this.parseProgress(newContent) };
+  }
+
   private parseProgress(content: string): ProgressResult {
     // Extract title
     const titleMatch = content.match(/^#\s+(.+)$/m);
