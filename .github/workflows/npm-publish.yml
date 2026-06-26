@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # リリース作成に必要
-      id-token: write   # npm Trusted Publishing (OIDC) に必要
 
     steps:
       # リポジトリのコードをチェックアウト
@@ -31,7 +30,6 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false
 
       # 依存関係のインストール（package-lock.jsonを使用、ランナー標準のnpmで）
       - name: Install dependencies
@@ -63,17 +61,12 @@ jobs:
 
           echo "Version check passed: $TAG_VERSION"
 
-      # Trusted Publishing (OIDC) に対応した npm へ更新 (>= 11.5.1)
-      # 依存のインストール後・公開直前に行う（npm ci への影響を避けるため）
-      - name: Update npm for OIDC publishing
-        run: |
-          npm install -g npm@latest
-          echo "npm version: $(npm -v)"
-          echo "node version: $(node -v)"
-
-      # npmへの公開（OIDC Trusted Publishing。トークン不要、provenance自動付与）
+      # npmへの公開（NPM_TOKEN を使用）
+      # 注意: NPM_TOKEN (Automation token) を GitHub Secrets に設定する必要があります
       - name: Publish to npm
         run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # リリースノートの作成（オプション）
       - name: Create Release
