@@ -67,10 +67,15 @@ jobs:
           npm install -g npm@latest
           echo "npm version: $(npm -v)"
 
-      # setup-node が .npmrc に書く _authToken 行を削除。
-      # これが残っていると npm は空トークンで認証しようとし OIDC を使わない。
-      - name: Remove token placeholder from .npmrc
-        run: sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+      # setup-node が .npmrc に書く _authToken 行を削除し、レジストリ設定だけ残す。
+      # トークン行が残っていると npm は OIDC ではなく空トークンで認証しようとする。
+      - name: Prepare .npmrc for OIDC publishing
+        run: |
+          echo "=== .npmrc before ==="
+          cat "$NPM_CONFIG_USERCONFIG"
+          sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+          echo "=== .npmrc after ==="
+          cat "$NPM_CONFIG_USERCONFIG"
 
       # npmへの公開（OIDC Trusted Publishing）
       - name: Publish to npm
