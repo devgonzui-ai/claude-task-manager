@@ -1,95 +1,49 @@
 name: Publish to npm
 
-# このワークフローはタグがpushされた時に実行されます
-# 例: git tag v1.0.0 && git push origin v1.0.0
-#
-# 公開は npm Trusted Publishing (OIDC) を使用します。長期トークン(NPM_TOKEN)は不要です。
-# 事前に npmjs.com のパッケージ設定で Trusted Publisher を登録してください:
-#   - Repository: devgonzui-ai/claude-task-manager
+# Trusted Publishing (OIDC) を使用。長期トークン不要。
+# npmjs.com で Trusted Publisher を事前登録すること:
+#   - Owner: devgonzui-ai
+#   - Repository: claude-task-manager
 #   - Workflow filename: npm-publish.yml
 on:
   push:
     tags:
-      - 'v*'  # v1.0.0, v2.1.0 などのタグにマッチ
+      - 'v*'
+
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # リリース作成に必要
-      id-token: write   # npm Trusted Publishing (OIDC) に必要
-
     steps:
-      # リポジトリのコードをチェックアウト
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      # Node.js環境のセットアップ
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
-      # 依存関係のインストール（package-lock.jsonを使用、ランナー標準のnpmで）
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      # テストの実行
-      - name: Run tests
-        run: npm run test:ci
+      - run: npm run test:ci
 
-      # TypeScriptのビルド
-      - name: Build
-        run: npm run build
-
-      # タグとpackage.jsonのバージョンが一致しているか確認
       - name: Verify version match
         run: |
-          # タグからバージョンを取得（v1.0.0 -> 1.0.0）
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
-
-          # package.jsonのバージョンを取得
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-
-          # バージョンが一致しているか確認
           if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "Error: Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
-            echo "Please ensure the tag matches the version in package.json"
+            echo "::error::Tag version ($TAG_VERSION) != package.json version ($PACKAGE_VERSION)"
             exit 1
           fi
 
-          echo "Version check passed: $TAG_VERSION"
+      - run: npm publish
 
-      # Trusted Publishing (OIDC) に対応した npm へ更新 (>= 11.5.1)
-      - name: Update npm for OIDC publishing
-        run: |
-          npm install -g npm@latest
-          echo "npm version: $(npm -v)"
-
-      # setup-node が .npmrc に書く _authToken 行を削除し、レジストリ設定だけ残す。
-      # トークン行が残っていると npm は OIDC ではなく空トークンで認証しようとする。
-      - name: Prepare .npmrc for OIDC publishing
-        run: |
-          echo "=== .npmrc before ==="
-          cat "$NPM_CONFIG_USERCONFIG"
-          sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
-          echo "=== .npmrc after ==="
-          cat "$NPM_CONFIG_USERCONFIG"
-
-      # npmへの公開（OIDC Trusted Publishing）
-      - name: Publish to npm
-        run: npm publish --provenance
-
-      # リリースノートの作成（オプション）
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
           body: |
-            Changes in this Release:
-            - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.

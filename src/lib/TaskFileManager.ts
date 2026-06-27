@@ -80,8 +80,15 @@ export class TaskFileManager {
       const now = new Date();
       const timestamp = format(now, 'yyyy-MM-dd_HH-mm-ss');
       const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
-      const archiveFileName = `${timestamp}-${milliseconds}_task.md`;
-      const archivePath = path.join(this.archiveDir, archiveFileName);
+      let archiveFileName = `${timestamp}-${milliseconds}_task.md`;
+      let archivePath = path.join(this.archiveDir, archiveFileName);
+
+      let suffix = 1;
+      while (await fs.pathExists(archivePath)) {
+        archiveFileName = `${timestamp}-${milliseconds}-${suffix}_task.md`;
+        archivePath = path.join(this.archiveDir, archiveFileName);
+        suffix++;
+      }
 
       const currentContent = await fs.readFile(this.taskFile, 'utf8');
       const archivedContent = `<!-- Archived: ${new Date().toISOString()} -->\n\n${currentContent}`;

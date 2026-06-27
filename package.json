@@ -51,6 +51,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist/",
     "src/locales/",
