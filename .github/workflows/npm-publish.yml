@@ -5,6 +5,9 @@ name: Publish to npm
 #   - Owner: devgonzui-ai
 #   - Repository: claude-task-manager
 #   - Workflow filename: npm-publish.yml
+#
+# 注意: NPM_TOKEN シークレットが残っていると setup-node が
+# NODE_AUTH_TOKEN に注入し OIDC を妨害する。必ず削除すること。
 on:
   push:
     tags:
@@ -22,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
@@ -38,6 +41,11 @@ jobs:
             echo "::error::Tag version ($TAG_VERSION) != package.json version ($PACKAGE_VERSION)"
             exit 1
           fi
+
+      - name: Update npm for OIDC publishing
+        run: |
+          npm install -g npm@latest
+          echo "npm version: $(npm -v)"
 
       - run: npm publish
 
