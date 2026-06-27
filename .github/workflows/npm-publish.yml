@@ -5,6 +5,7 @@ name: Publish to npm
 #   - Owner: devgonzui-ai
 #   - Repository: claude-task-manager
 #   - Workflow filename: npm-publish.yml
+#   - Allowed actions: npm publish
 on:
   push:
     tags:
@@ -20,12 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # registry-url を指定しない。指定すると setup-node が
-      # NODE_AUTH_TOKEN を環境変数に注入し、npm が OIDC ではなく
-      # トークン認証を試みて失敗する。
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       - run: npm ci
 
@@ -40,11 +40,23 @@ jobs:
             exit 1
           fi
 
-      - name: Update npm and publish
+      - name: Update npm for OIDC
+        run: npm install -g npm@">=11.5.1"
+
+      - name: Debug auth state
         run: |
-          npm install -g npm@">=11.5.1"
-          npm config set registry https://registry.npmjs.org/
-          npm publish
+          echo "npm version: $(npm -v)"
+          echo "=== .npmrc ==="
+          cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no .npmrc"
+          echo "=== npm config ==="
+          npm config list
+          echo "=== NODE_AUTH_TOKEN set? ==="
+          [ -n "$NODE_AUTH_TOKEN" ] && echo "yes (length: ${#NODE_AUTH_TOKEN})" || echo "no"
+
+      - name: Publish to npm
+        run: npm publish --verbose
+        env:
+          NODE_AUTH_TOKEN: ''
 
       - uses: softprops/action-gh-release@v3
         with:
