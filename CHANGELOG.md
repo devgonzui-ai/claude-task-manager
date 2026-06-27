@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale parity tests ensuring `en.json` and `ja.json` always define the same keys and never ship empty values.
 - Regression tests ensuring `--help` and `progress` output never leak raw i18n keys.
 
+### CI
+- Switched npm publish from long-lived `NPM_TOKEN` to OIDC Trusted Publishing (no secrets required).
+
 ### Changed
 - The generated `/task` slash command was modernized for accuracy: it now uses Claude Code frontmatter (`description` / `argument-hint` / `allowed-tools`), passes arguments through verbatim via `$ARGUMENTS` instead of asking Claude to re-derive the CLI call, and special-cases `run` / `split` so they don't trigger a nested `claude` invocation. This replaces the long prose template that relied on the model interpreting instructions.
 - The `claude` command is now deprecated. It still prints the task content but shows a notice pointing to `claude-task run`, which actually executes the task with Claude Code.
