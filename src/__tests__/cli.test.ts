@@ -64,6 +64,7 @@ describe('Claude Task CLI', () => {
       expect(gitignoreContent).toContain('task.md');
       expect(gitignoreContent).toContain('archive/');
       expect(gitignoreContent).toContain('.claude-tasks/');
+      expect(gitignoreContent).toContain('.claude/skills/task/');
     });
 
     it('should create custom command when .claude/commands exists', async () => {
@@ -133,6 +134,7 @@ describe('Claude Task CLI', () => {
       // Should add other entries
       expect(gitignoreContent).toContain('archive/');
       expect(gitignoreContent).toContain('.claude-tasks/');
+      expect(gitignoreContent).toContain('.claude/skills/task/');
     });
   });
 
