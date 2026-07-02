@@ -114,6 +114,7 @@ export class TaskManager {
 
       await this.customCommandGenerator.createClaudeCustomCommand();
       await this.customCommandGenerator.createClaudeSkill();
+      await this.customCommandGenerator.createMcpConfig();
       await this.updateGitignore();
     } catch (error) {
       throw new FileSystemError(

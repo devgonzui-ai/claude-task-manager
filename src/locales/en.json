@@ -5,6 +5,7 @@
       "success": "✅ Task manager initialized successfully",
       "customCommand": "✅ Created Claude Code custom command /task",
       "skill": "✅ Created Claude Code skill at .claude/skills/task/SKILL.md",
+      "mcpConfig": "✅ Registered claude-task MCP server in .mcp.json",
       "gitignoreUpdated": "✅ Updated .gitignore with task-related entries"
     },
     "new": {

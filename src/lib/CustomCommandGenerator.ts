@@ -52,6 +52,46 @@ export class CustomCommandGenerator {
     }
   }
 
+  /**
+   * Register the claude-task MCP server in the project's .mcp.json so Claude
+   * Code can use schema-bound task tools. Created only when a .claude
+   * directory already exists, mirroring the command/skill behavior. An
+   * existing "claude-task" entry is left untouched so user edits survive
+   * re-running init.
+   */
+  async createMcpConfig(): Promise<void> {
+    const claudeDir = path.join(this.workingDir, '.claude');
+    const mcpConfigPath = path.join(this.workingDir, '.mcp.json');
+
+    try {
+      if (!(await fs.pathExists(claudeDir))) {
+        return;
+      }
+
+      let config: { mcpServers?: Record<string, unknown> } = {};
+      if (await fs.pathExists(mcpConfigPath)) {
+        config = await fs.readJson(mcpConfigPath);
+      }
+
+      if (config.mcpServers && config.mcpServers['claude-task']) {
+        return;
+      }
+
+      config.mcpServers = {
+        ...config.mcpServers,
+        'claude-task': {
+          command: 'claude-task-mcp',
+          args: []
+        }
+      };
+
+      await fs.writeJson(mcpConfigPath, config, { spaces: 2 });
+      console.log(this.i18n.t('commands.init.mcpConfig'));
+    } catch (error) {
+      console.warn('Could not update .mcp.json:', error);
+    }
+  }
+
   private generateSkillContent(): string {
     return `---
 name: task

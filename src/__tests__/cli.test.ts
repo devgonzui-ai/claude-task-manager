@@ -110,6 +110,40 @@ describe('Claude Task CLI', () => {
       expect(skill).toContain('description:');
     });
 
+    it('should register the MCP server in .mcp.json when .claude exists', async () => {
+      await fs.ensureDir(path.join(tempDir, '.claude'));
+
+      const result = await runCLI(['init'], tempDir);
+
+      expect(result.code).toBe(0);
+      const mcpConfigPath = path.join(tempDir, '.mcp.json');
+      expect(await fs.pathExists(mcpConfigPath)).toBe(true);
+
+      const mcpConfig = await fs.readJson(mcpConfigPath);
+      expect(mcpConfig.mcpServers['claude-task']).toEqual({
+        command: 'claude-task-mcp',
+        args: []
+      });
+    });
+
+    it('should preserve existing .mcp.json entries', async () => {
+      await fs.ensureDir(path.join(tempDir, '.claude'));
+      await fs.writeJson(path.join(tempDir, '.mcp.json'), {
+        mcpServers: {
+          other: { command: 'other-server', args: ['--flag'] },
+          'claude-task': { command: 'custom-claude-task-mcp', args: [] }
+        }
+      });
+
+      const result = await runCLI(['init'], tempDir);
+
+      expect(result.code).toBe(0);
+      const mcpConfig = await fs.readJson(path.join(tempDir, '.mcp.json'));
+      // User's customized entry and unrelated servers survive re-init.
+      expect(mcpConfig.mcpServers['claude-task'].command).toBe('custom-claude-task-mcp');
+      expect(mcpConfig.mcpServers.other).toEqual({ command: 'other-server', args: ['--flag'] });
+    });
+
     it('should not create command or skill when .claude is absent', async () => {
       const result = await runCLI(['init'], tempDir);
 

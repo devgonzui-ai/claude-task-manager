@@ -5,6 +5,7 @@
       "success": "✅ タスクマネージャーを初期化しました",
       "customCommand": "✅ Claude Code カスタムコマンド /task を作成しました",
       "skill": "✅ Claude Code スキルを作成しました: .claude/skills/task/SKILL.md",
+      "mcpConfig": "✅ .mcp.jsonにclaude-task MCPサーバーを登録しました",
       "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました"
     },
     "new": {
