@@ -91,7 +91,7 @@ export class TaskManager {
     return null;
   }
 
-  async init(): Promise<void> {
+  async init(options: { hooks?: boolean } = {}): Promise<void> {
     try {
       await fs.ensureDir(this.config.archiveDir);
       await fs.ensureDir(this.config.configDir);
@@ -115,6 +115,9 @@ export class TaskManager {
       await this.customCommandGenerator.createClaudeCustomCommand();
       await this.customCommandGenerator.createClaudeSkill();
       await this.customCommandGenerator.createMcpConfig();
+      if (options.hooks) {
+        await this.customCommandGenerator.createHooksConfig();
+      }
       await this.updateGitignore();
     } catch (error) {
       throw new FileSystemError(
@@ -226,6 +229,22 @@ export class TaskManager {
 
   async getProgress(): Promise<ProgressResult> {
     return await this.progressTracker.getProgress();
+  }
+
+  /**
+   * One-line status for embedding in a statusline (e.g. Claude Code's
+   * `statusLine` setting): `<title> ▸ <pct>%`, title only when the task has
+   * no subtasks, or a localized "no task" marker.
+   */
+  async getShortStatus(): Promise<string> {
+    if (!await this.taskFileManager.taskFileExists()) {
+      return this.i18n.t('commands.status.shortNoTask');
+    }
+    const progress = await this.progressTracker.getProgress();
+    if (progress.total === 0) {
+      return progress.title;
+    }
+    return `${progress.title} ▸ ${progress.percentage}%`;
   }
 
   formatProgress(result: ProgressResult): string {

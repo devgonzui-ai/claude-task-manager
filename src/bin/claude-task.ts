@@ -51,9 +51,10 @@ program
 program
   .command('init')
   .description(i18n.t('commands.init.description'))
-  .action(async () => {
+  .option('--hooks', 'Configure Claude Code statusline and SessionStart hook in .claude/settings.json')
+  .action(async (options) => {
     try {
-      await taskManager.init();
+      await taskManager.init({ hooks: options.hooks });
       console.log(chalk.green(i18n.t('commands.init.success')));
       console.log(chalk.gray('  Created: task.md, archive/, .claude-tasks/'));
     } catch (error) {
@@ -149,8 +150,14 @@ program
 program
   .command('status')
   .description(i18n.t('commands.status.description'))
-  .action(async () => {
+  .option('--short', 'One-line output for statusline embedding (e.g. Claude Code statusLine)')
+  .action(async (options) => {
     try {
+      if (options.short) {
+        console.log(await taskManager.getShortStatus());
+        return;
+      }
+
       const status = await taskManager.getStatus();
       console.log(chalk.blue(i18n.t('commands.status.title')));
       console.log(status.currentTask 
