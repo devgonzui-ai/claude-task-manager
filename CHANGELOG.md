@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-03
+
+### Added
+- **MCP server** (`claude-task-mcp`): a new stdio binary that exposes task management to Claude Code as schema-bound MCP tools — `task_new`, `task_status`, `task_progress`, `task_done`, `task_split`, `task_history`, `task_archive`. All tools route through the same `TaskManager` as the CLI, and tool inputs are validated with zod schemas, eliminating argument drift from hand-assembled Bash commands.
+- `claude-task init` now registers the MCP server in the project's `.mcp.json` (project scope, intended to be committed) when a `.claude/` directory exists — the same gating as the `/task` command and skill generation. Existing `.mcp.json` entries, including a user-customized `claude-task` entry, are never overwritten.
+- MCP server tests driving the real server through the SDK's `InMemoryTransport` and an MCP client, asserting against actual `task.md` changes.
+
+### Fixed
+- `claude-task init` now adds the generated `.claude/skills/task/` skill directory to `.gitignore`. The skill file was introduced in 1.2.0 but the `.gitignore` entries were never updated to cover it.
+
 ## [1.2.0] - 2026-06-27
 
 ### Added

@@ -19,6 +19,7 @@ Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タ
 - 🏷️ **タグとプライオリティ**: タスクの分類と優先度管理
 - 📈 **進捗トラッキング**: サブタスク完了状況のビジュアル表示
 - 🤖 **AI タスク分割**: Claude を使ってタスクを自動的にサブタスクに分解
+- 🔌 **MCP サーバー**: `.mcp.json`経由でタスク管理をスキーマ付きMCPツールとして Claude Code に公開
 
 ## インストール
 
@@ -178,14 +179,15 @@ claude-task claude "コードをリファクタリングしてください"
 > **非推奨:** `claude` はタスク内容を表示するだけです。現在のタスクを実際に
 > Claude Code で実行するには `claude-task run` を使ってください。
 
-## Claude Code 統合（カスタムコマンド & スキル）
+## Claude Code 統合（カスタムコマンド & スキル & MCPサーバー）
 
 `claude-task init`を実行すると、`.claude/`ディレクトリがあるプロジェクトでは
-以下の2つが自動生成されます：
+以下の3つが自動生成されます：
 
 - `.claude/commands/task.md` の `/task` **スラッシュコマンド**
 - `.claude/skills/task/SKILL.md` の **スキル**（新しい Claude Code が
   タスク管理を自動的に発見できるようにするため）
+- `.mcp.json` への **MCPサーバー** 登録（後述の「MCPサーバー」セクションを参照）
 
 `/task` コマンドにより、Claude Code内で以下のコマンドを直接使用できます：
 
@@ -212,6 +214,41 @@ claude-task claude "コードをリファクタリングしてください"
 ```
 
 カスタムコマンドファイルは、プロジェクトの言語設定（英語または日本語）に応じて自動的に生成されます。
+
+### MCPサーバー
+
+パッケージには `claude-task-mcp` バイナリが同梱されています。これは stdio 型の
+[MCP](https://modelcontextprotocol.io) サーバーで、Claude Code が CLI コマンドを
+組み立てる代わりに、型付き・スキーマ検証済みのツールでタスクを管理できます：
+
+| ツール | 説明 |
+| --- | --- |
+| `task_new` | 新しいタスクを作成（現在のタスクは先にアーカイブ） |
+| `task_status` | 現在のタスクと実行統計を表示 |
+| `task_progress` | サブタスクのチェックボックス進捗を表示 |
+| `task_done` | サブタスクを番号で完了にする（undo対応） |
+| `task_split` | AIでタスクをサブタスクに分割 |
+| `task_history` | アーカイブ済みタスクを一覧表示 |
+| `task_archive` | 現在のタスクをアーカイブ |
+
+`claude-task init` はプロジェクトの `.mcp.json` にサーバーを登録します
+（コミットしてOK — プロジェクトスコープのサーバーは Claude Code が使用前に
+承認を求めます）：
+
+```json
+{
+  "mcpServers": {
+    "claude-task": {
+      "command": "claude-task-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+`.mcp.json` に `claude-task` エントリが既に存在する場合、init はそれを
+上書きしません。すべてのツールは CLI と同じ `TaskManager` を経由するため、
+両方のフロントエンドで動作が一貫します。
 
 ## ファイル構造
 

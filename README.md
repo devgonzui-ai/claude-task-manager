@@ -15,6 +15,7 @@ A powerful task management extension for Claude Code that automates task trackin
 - 🏷️ **Priority and Tags**: Organize tasks with priority levels (high/medium/low) and custom tags
 - 📊 **Task History**: View and track all completed tasks
 - 🎯 **Custom Commands**: Automatically creates `/task` custom command for Claude Code
+- 🔌 **MCP Server**: Exposes task management to Claude Code as schema-bound MCP tools via `.mcp.json`
 - 📈 **Progress Tracking**: Visual progress bar for subtask completion
 - 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
 
@@ -141,13 +142,15 @@ claude-task claude "Review and optimize the database schema"
 
 ## Claude Code Integration
 
-### Custom Command & Skill
+### Custom Command, Skill & MCP Server
 After running `claude-task init` in a project that has a `.claude/` directory,
-two integrations are generated automatically:
+three integrations are generated automatically:
 
 - A `/task` **slash command** at `.claude/commands/task.md`
 - A **Skill** at `.claude/skills/task/SKILL.md`, so newer Claude Code versions
   can discover task management on their own.
+- An **MCP server** registration in `.mcp.json`, exposing task management as
+  schema-bound tools (see [MCP Server](#mcp-server) below).
 
 The `/task` command lets you use the following directly within Claude Code:
 
@@ -174,6 +177,35 @@ The `/task` command lets you use the following directly within Claude Code:
 ```
 
 The custom command file is automatically generated in the language configured in your project settings (English or Japanese).
+
+### MCP Server
+
+The package ships a `claude-task-mcp` binary — a stdio [MCP](https://modelcontextprotocol.io) server that lets Claude Code manage tasks through typed, schema-validated tools instead of assembling CLI commands:
+
+| Tool | Description |
+| --- | --- |
+| `task_new` | Create a new task (archives the current one first) |
+| `task_status` | Show current task and execution stats |
+| `task_progress` | Show subtask checkbox progress |
+| `task_done` | Mark subtasks done by number (supports undo) |
+| `task_split` | Split the task into subtasks using AI |
+| `task_history` | List archived tasks |
+| `task_archive` | Archive the current task |
+
+`claude-task init` registers the server in your project's `.mcp.json` (safe to commit — Claude Code asks for approval before using project-scoped servers):
+
+```json
+{
+  "mcpServers": {
+    "claude-task": {
+      "command": "claude-task-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+If a `claude-task` entry already exists in `.mcp.json`, init leaves it untouched. All tools route through the same `TaskManager` core as the CLI, so both front-ends stay consistent.
 
 ### task.md Format
 ```markdown
