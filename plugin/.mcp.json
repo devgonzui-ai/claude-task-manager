@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "claude-task": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "-p",
+        "@gonzui/claude-task-manager",
+        "claude-task-mcp"
+      ],
+      "cwd": "${CLAUDE_PROJECT_DIR}"
+    }
+  }
+}

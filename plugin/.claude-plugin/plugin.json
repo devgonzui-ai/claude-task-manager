@@ -1,0 +1,20 @@
+{
+  "name": "claude-task",
+  "displayName": "Claude Task Manager",
+  "version": "1.6.0",
+  "description": "Task management extension for Claude Code with archiving and history",
+  "author": {
+    "name": "gonzui"
+  },
+  "homepage": "https://github.com/devgonzui-ai/claude-task-manager",
+  "repository": "https://github.com/devgonzui-ai/claude-task-manager",
+  "license": "MIT",
+  "keywords": [
+    "task",
+    "task-management",
+    "mcp",
+    "cli"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
+}

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-04
+
+### Added
+- **Claude Code plugin packaging**: the repo now doubles as a plugin marketplace (`.claude-plugin/marketplace.json`) hosting a `claude-task` plugin (`plugin/`) that bundles the `/task` slash command, the `task` skill, the `SessionStart` hook, and the MCP server (launched via `npx -y -p @gonzui/claude-task-manager claude-task-mcp` with `cwd: ${CLAUDE_PROJECT_DIR}`, so no global install is needed for it). Install with `/plugin marketplace add devgonzui-ai/claude-task-manager` + `/plugin install claude-task@gonzui-tools`. The statusline cannot be plugin-provided (user-settings-only in Claude Code), so it stays with `init --hooks` / manual wiring.
+- `npm run generate:plugin` regenerates the plugin from the same sources as `claude-task init` (command/skill content from `CustomCommandGenerator`, hook entry from a shared constant), and a new drift-guard test suite (`plugin.test.ts`) fails whenever the checked-in plugin files no longer match the generators.
+- `claude-task init` remains fully supported as the non-plugin install path.
+
+### Fixed
+- Scoped the repo's `.gitignore` patterns (`/task.md`, `/archive/`, `/task.*.md`) to the repository root so the bundled `plugin/commands/task.md` can be committed.
+
 ## [1.5.0] - 2026-07-04
 
 ### Added

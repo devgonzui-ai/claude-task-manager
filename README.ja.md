@@ -22,6 +22,7 @@ Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タ
 - 🔌 **MCP サーバー**: `.mcp.json`経由でタスク管理をスキーマ付きMCPツールとして Claude Code に公開
 - 📟 **ステータスライン & フック**: Claude Code のステータスラインに現在のタスクを表示し、セッション開始時に自動注入（`init --hooks` でオプトイン）
 - 🔄 **TODO 同期**: `task.md` を永続的な source of truth とし、Claude Code のセッション内 TODO リストが一方向でミラー
+- 📦 **プラグイン化**: コマンド + スキル + フック + MCP サーバーを Claude Code プラグインとしてワンステップでインストール
 
 ## インストール
 
@@ -188,6 +189,34 @@ claude-task claude "コードをリファクタリングしてください"
 
 > **非推奨:** `claude` はタスク内容を表示するだけです。現在のタスクを実際に
 > Claude Code で実行するには `claude-task run` を使ってください。
+
+## Claude Code プラグイン（ワンステップインストール）
+
+このリポジトリは Claude Code のプラグインマーケットプレイスを兼ねています。
+Claude Code 内で以下を実行：
+
+```
+/plugin marketplace add devgonzui-ai/claude-task-manager
+/plugin install claude-task@gonzui-tools
+```
+
+プラグインには `/task` スラッシュコマンド、`task` スキル、`SessionStart`
+フック（新しいセッションに現在のタスクを注入）、MCP サーバー（`npx` 経由で
+起動するのでグローバル npm インストール不要）が同梱されています。
+
+ローカルで必要な手順は2つだけ：
+
+- コマンド・スキル・フックが使う `claude-task` CLI 本体は npm から：
+  `npm install -g @gonzui/claude-task-manager` のあと、プロジェクトごとに
+  `claude-task init` を1回実行して `task.md` / `archive/` を作成
+- Claude Code はプラグインからステータスラインを設定できないため、
+  ステータスラインだけは `claude-task init --hooks` を実行するか、
+  「ステータスライン & SessionStart フック」セクションの `statusLine`
+  設定を手動で追加してください
+
+プラグイン本体は [`plugin/`](plugin/) にあり、`init` と同じソースから
+再生成されます（`npm run generate:plugin`）。両方のインストール経路が
+常に同一の内容になるよう、ズレたらテストが落ちる仕組みです。
 
 ## Claude Code 統合（カスタムコマンド & スキル & MCPサーバー）
 

@@ -3,8 +3,8 @@ gitignore# Claude personal workspace
 .claude-history/
 
 # Task manager working files (if using own tool)
-task.md
-archive/
+/task.md
+/archive/
 .claude-tasks/
 
 # OS and Editor
@@ -26,7 +26,7 @@ tmp/
 
 # Temporary task files
 *.tmp.md
-task.*.md
+/task.*.md
 
 # Claude Code custom commands (if you want to exclude them)
 # .claude/commands/task.md

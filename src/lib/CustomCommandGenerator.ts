@@ -2,6 +2,22 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { I18n } from './i18n';
 
+/**
+ * Claude Code integration entries shared by `init --hooks` (merged into
+ * .claude/settings.json) and the plugin package (hooks/hooks.json), so both
+ * distribution channels stay in sync.
+ */
+export const STATUS_LINE_ENTRY = {
+  type: 'command',
+  command: 'claude-task status --short',
+  padding: 1
+} as const;
+
+export const SESSION_START_HOOK_ENTRY = {
+  type: 'command',
+  command: 'claude-task status'
+} as const;
+
 export class CustomCommandGenerator {
   private workingDir: string;
   private i18n: I18n;
@@ -125,11 +141,7 @@ export class CustomCommandGenerator {
       }
 
       if (!settings.statusLine) {
-        settings.statusLine = {
-          type: 'command',
-          command: 'claude-task status --short',
-          padding: 1
-        };
+        settings.statusLine = { ...STATUS_LINE_ENTRY };
       }
 
       settings.hooks = settings.hooks || {};
@@ -138,10 +150,7 @@ export class CustomCommandGenerator {
         (entry) => typeof entry.command === 'string' && entry.command.includes('claude-task')
       );
       if (!alreadyHooked) {
-        sessionStart.push({
-          type: 'command',
-          command: 'claude-task status'
-        });
+        sessionStart.push({ ...SESSION_START_HOOK_ENTRY });
         settings.hooks['SessionStart'] = sessionStart;
       }
 
@@ -152,7 +161,7 @@ export class CustomCommandGenerator {
     }
   }
 
-  private generateSkillContent(): string {
+  generateSkillContent(): string {
     return `---
 name: task
 description: Manage development tasks with the claude-task CLI. Use when the user wants to create, run, track, split, complete, or archive tasks, or asks about the current task / task progress. Tasks live in task.md.
@@ -213,7 +222,7 @@ todo list is an **ephemeral working mirror** of it. To keep them from conflictin
 `;
   }
 
-  private generateCustomCommandContent(): string {
+  generateCustomCommandContent(): string {
     return `---
 description: Manage tasks with the claude-task CLI
 argument-hint: <new|status|progress|done|split|history|archive|run> [options]

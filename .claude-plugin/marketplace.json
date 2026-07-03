@@ -1,0 +1,27 @@
+{
+  "name": "gonzui-tools",
+  "owner": {
+    "name": "gonzui"
+  },
+  "plugins": [
+    {
+      "name": "claude-task",
+      "source": "./plugin",
+      "displayName": "Claude Task Manager",
+      "description": "Task management extension for Claude Code with archiving and history",
+      "version": "1.6.0",
+      "author": {
+        "name": "gonzui"
+      },
+      "homepage": "https://github.com/devgonzui-ai/claude-task-manager",
+      "repository": "https://github.com/devgonzui-ai/claude-task-manager",
+      "license": "MIT",
+      "keywords": [
+        "task",
+        "task-management",
+        "mcp",
+        "cli"
+      ]
+    }
+  ]
+}
