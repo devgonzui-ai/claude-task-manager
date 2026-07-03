@@ -17,6 +17,7 @@ A powerful task management extension for Claude Code that automates task trackin
 - 🎯 **Custom Commands**: Automatically creates `/task` custom command for Claude Code
 - 🔌 **MCP Server**: Exposes task management to Claude Code as schema-bound MCP tools via `.mcp.json`
 - 📟 **Statusline & Hooks**: Shows the current task in Claude Code's status line and injects it at session start (opt-in via `init --hooks`)
+- 🔄 **Todo Reconciliation**: `task.md` stays the persistent source of truth; Claude Code's in-session todo list mirrors it one way
 - 📈 **Progress Tracking**: Visual progress bar for subtask completion
 - 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
 
@@ -248,6 +249,29 @@ Existing settings are preserved: a `statusLine` you already configured is left
 untouched, your own `SessionStart` hooks are kept, and re-running
 `init --hooks` never duplicates entries. Nothing is written unless you pass the
 flag, and no hook performs destructive actions (archiving stays manual).
+
+### task.md vs Claude Code's Todo List
+
+Claude Code keeps its own in-session todo list. The two layers have distinct
+roles and are kept in sync one way:
+
+| Layer | Role |
+| --- | --- |
+| `task.md` (claude-task) | Persistent, file-based, cross-session **source of truth** |
+| Claude Code todo list | Ephemeral in-session working mirror |
+
+The generated skill, slash command, MCP tool descriptions, and the
+`claude-task run` prompt all instruct Claude to:
+
+1. Seed its in-session todo list from the unchecked subtasks in `task.md`
+   (via `claude-task progress`) when starting work.
+2. Persist each finished subtask with `claude-task done <n>` **before**
+   checking off the mirrored todo.
+3. Treat `task.md` as authoritative on any disagreement — re-seed the todo
+   list from `claude-task progress`, never the other way around.
+
+This removes double management: subtasks live in `task.md` and survive across
+sessions, while the in-session list is just a live view of them.
 
 ### task.md Format
 ```markdown

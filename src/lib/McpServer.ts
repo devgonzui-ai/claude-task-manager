@@ -83,7 +83,8 @@ export function createMcpServer(taskManager: TaskManager): McpServer {
     {
       title: 'Show subtask progress',
       description:
-        'Show subtask checkbox progress for the current task: totals, percentage, and each subtask with its 1-based number.',
+        'Show subtask checkbox progress for the current task: totals, percentage, and each subtask with its 1-based number. ' +
+        'Use this to seed or re-sync an in-session todo list mirroring the task — task.md is the persistent source of truth.',
       inputSchema: {}
     },
     async () => {
@@ -110,7 +111,8 @@ export function createMcpServer(taskManager: TaskManager): McpServer {
     {
       title: 'Mark subtasks done',
       description:
-        'Mark subtask checkbox(es) in task.md as done (or uncheck with undo). Numbers are 1-based and match task_progress order.',
+        'Mark subtask checkbox(es) in task.md as done (or uncheck with undo). Numbers are 1-based and match task_progress order. ' +
+        'Call this before checking off any in-session todo that mirrors the subtask, so the persistent state is updated first.',
       inputSchema: {
         numbers: z.array(z.number().int().min(1)).min(1).describe('1-based subtask numbers'),
         undo: z.boolean().optional().describe('Uncheck instead of checking')

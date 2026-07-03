@@ -9,6 +9,21 @@ import {
   ClaudeExecutionError
 } from '../types';
 
+/**
+ * Prompt sent by `claude-task run`. Seeds Claude Code's ephemeral in-session
+ * todo list from the task file's checkboxes and routes completions back
+ * through `claude-task done`, so task.md stays the persistent source of truth.
+ * Exported so tests assert against the same string.
+ */
+export function buildRunPrompt(relativePath: string): string {
+  return (
+    `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode. ` +
+    'Before starting, mirror the unchecked checkboxes into your in-session todo list. ' +
+    'As you finish each subtask, run `claude-task done <n>` (numbers follow checkbox order) ' +
+    'and update the mirrored todo — the task file is the source of truth.'
+  );
+}
+
 export class ClaudeExecutor {
   private taskFile: string;
 
@@ -36,7 +51,7 @@ export class ClaudeExecutor {
       const taskPath = path.resolve(this.taskFile);
       const relativePath = path.relative(process.cwd(), taskPath);
 
-      const prompt = `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`;
+      const prompt = buildRunPrompt(relativePath);
 
       console.log(chalk.gray(`Task file: ${relativePath}`));
 
