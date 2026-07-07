@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-03
+
+### Added
+- `claude-task status --short`: one-line output for statusline embedding, e.g. `Implement auth ▸ 60%` (title only when the task has no subtasks, a localized `No task` marker when there is none).
+- `claude-task init --hooks`: opt-in flag that merges a Claude Code `statusLine` entry (`claude-task status --short`) and a `SessionStart` hook (`claude-task status`, whose stdout is injected as session context) into `.claude/settings.json`. Existing user settings are preserved — a configured `statusLine` is never overwritten, user `SessionStart` hooks are kept, and re-running the flag never duplicates entries. Nothing is written without the flag, and no hook performs destructive actions (archiving stays manual).
+- CLI tests covering `status --short` (progress, no-subtask, no-task, Japanese locale) and `init --hooks` (generation, merge-preservation, idempotency).
+
 ## [1.3.1] - 2026-07-03
 
 ### Fixed

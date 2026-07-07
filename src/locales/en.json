@@ -6,6 +6,7 @@
       "customCommand": "✅ Created Claude Code custom command /task",
       "skill": "✅ Created Claude Code skill at .claude/skills/task/SKILL.md",
       "mcpConfig": "✅ Registered claude-task MCP server in .mcp.json",
+      "hooksConfig": "✅ Configured Claude Code statusline and SessionStart hook in .claude/settings.json",
       "gitignoreUpdated": "✅ Updated .gitignore with task-related entries"
     },
     "new": {
@@ -21,7 +22,8 @@
       "archivedCount": "Archived tasks: {{count}}",
       "lastRun": "Last run: {{time}}",
       "noLastRun": "Last run: Never",
-      "totalExecutions": "Total executions: {{count}}"
+      "totalExecutions": "Total executions: {{count}}",
+      "shortNoTask": "No task"
     },
     "run": {
       "description": "Run current task with Claude Code",

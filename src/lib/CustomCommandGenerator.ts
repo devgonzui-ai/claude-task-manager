@@ -92,6 +92,66 @@ export class CustomCommandGenerator {
     }
   }
 
+  /**
+   * Wire claude-task into Claude Code's ambient integration points by merging
+   * a `statusLine` entry and a `SessionStart` hook into
+   * `.claude/settings.json`. Only invoked behind an explicit flag
+   * (`claude-task init --hooks`); the user asked for it, so the .claude
+   * directory is created if missing. Existing user settings are preserved:
+   * a present `statusLine` is left untouched, and the hook is only appended
+   * when no claude-task SessionStart hook exists yet.
+   */
+  async createHooksConfig(): Promise<void> {
+    const claudeDir = path.join(this.workingDir, '.claude');
+    const settingsPath = path.join(claudeDir, 'settings.json');
+
+    try {
+      await fs.ensureDir(claudeDir);
+
+      interface HookEntry {
+        type: string;
+        command?: string;
+        [key: string]: unknown;
+      }
+      interface ClaudeSettings {
+        statusLine?: unknown;
+        hooks?: Record<string, HookEntry[]>;
+        [key: string]: unknown;
+      }
+
+      let settings: ClaudeSettings = {};
+      if (await fs.pathExists(settingsPath)) {
+        settings = await fs.readJson(settingsPath);
+      }
+
+      if (!settings.statusLine) {
+        settings.statusLine = {
+          type: 'command',
+          command: 'claude-task status --short',
+          padding: 1
+        };
+      }
+
+      settings.hooks = settings.hooks || {};
+      const sessionStart = settings.hooks['SessionStart'] || [];
+      const alreadyHooked = sessionStart.some(
+        (entry) => typeof entry.command === 'string' && entry.command.includes('claude-task')
+      );
+      if (!alreadyHooked) {
+        sessionStart.push({
+          type: 'command',
+          command: 'claude-task status'
+        });
+        settings.hooks['SessionStart'] = sessionStart;
+      }
+
+      await fs.writeJson(settingsPath, settings, { spaces: 2 });
+      console.log(this.i18n.t('commands.init.hooksConfig'));
+    } catch (error) {
+      console.warn('Could not update .claude/settings.json:', error);
+    }
+  }
+
   private generateSkillContent(): string {
     return `---
 name: task

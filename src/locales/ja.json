@@ -6,6 +6,7 @@
       "customCommand": "✅ Claude Code カスタムコマンド /task を作成しました",
       "skill": "✅ Claude Code スキルを作成しました: .claude/skills/task/SKILL.md",
       "mcpConfig": "✅ .mcp.jsonにclaude-task MCPサーバーを登録しました",
+      "hooksConfig": "✅ .claude/settings.jsonにClaude Codeのステータスラインと SessionStart フックを設定しました",
       "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました"
     },
     "new": {
@@ -21,7 +22,8 @@
       "archivedCount": "アーカイブ済み: {{count}}件",
       "lastRun": "最後の実行: {{time}}",
       "noLastRun": "最後の実行: なし",
-      "totalExecutions": "総実行回数: {{count}}"
+      "totalExecutions": "総実行回数: {{count}}",
+      "shortNoTask": "タスクなし"
     },
     "run": {
       "description": "現在のタスクをClaude Codeで実行",

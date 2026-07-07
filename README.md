@@ -16,6 +16,7 @@ A powerful task management extension for Claude Code that automates task trackin
 - 📊 **Task History**: View and track all completed tasks
 - 🎯 **Custom Commands**: Automatically creates `/task` custom command for Claude Code
 - 🔌 **MCP Server**: Exposes task management to Claude Code as schema-bound MCP tools via `.mcp.json`
+- 📟 **Statusline & Hooks**: Shows the current task in Claude Code's status line and injects it at session start (opt-in via `init --hooks`)
 - 📈 **Progress Tracking**: Visual progress bar for subtask completion
 - 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
 
@@ -45,6 +46,10 @@ This command:
 - If `.claude/commands/` exists, creates `/task` custom command
 - Updates `.gitignore` to exclude task-related files
 
+Options:
+- `--hooks`: Also wire the current task into Claude Code's status line and
+  session start (see [Statusline & SessionStart Hook](#statusline--sessionstart-hook))
+
 **Git-like Directory Behavior**: 
 - When you run any command, Claude Task Manager searches upward for a `.claude-tasks` directory (similar to how Git finds `.git`)
 - If found, all operations use that project root, regardless of your current directory
@@ -71,6 +76,10 @@ Displays:
 - Number of archived tasks
 - Last execution time
 - Total execution count
+
+Options:
+- `--short`: One-line output for statusline embedding, e.g. `Implement auth ▸ 60%`
+  (title only when the task has no subtasks, `No task` when there is none)
 
 ### Execute Current Task
 ```bash
@@ -206,6 +215,39 @@ The package ships a `claude-task-mcp` binary — a stdio [MCP](https://modelcont
 ```
 
 If a `claude-task` entry already exists in `.mcp.json`, init leaves it untouched. All tools route through the same `TaskManager` core as the CLI, so both front-ends stay consistent.
+
+### Statusline & SessionStart Hook
+
+Run `claude-task init --hooks` to make the current task ambient in Claude Code.
+It merges the following into `.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "claude-task status --short",
+    "padding": 1
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "claude-task status"
+      }
+    ]
+  }
+}
+```
+
+- **Statusline**: Claude Code's status bar shows the current task and progress,
+  e.g. `Implement auth ▸ 60%`, refreshed as you work.
+- **SessionStart hook**: the hook's stdout is injected as context, so every new
+  session starts already knowing the current task — no need to ask.
+
+Existing settings are preserved: a `statusLine` you already configured is left
+untouched, your own `SessionStart` hooks are kept, and re-running
+`init --hooks` never duplicates entries. Nothing is written unless you pass the
+flag, and no hook performs destructive actions (archiving stays manual).
 
 ### task.md Format
 ```markdown

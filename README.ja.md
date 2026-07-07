@@ -20,6 +20,7 @@ Claude Code 用のタスク管理拡張パッケージ（TypeScript 製）。タ
 - 📈 **進捗トラッキング**: サブタスク完了状況のビジュアル表示
 - 🤖 **AI タスク分割**: Claude を使ってタスクを自動的にサブタスクに分解
 - 🔌 **MCP サーバー**: `.mcp.json`経由でタスク管理をスキーマ付きMCPツールとして Claude Code に公開
+- 📟 **ステータスライン & フック**: Claude Code のステータスラインに現在のタスクを表示し、セッション開始時に自動注入（`init --hooks` でオプトイン）
 
 ## インストール
 
@@ -69,6 +70,10 @@ claude-task init
 - `.claude-tasks/` - 設定ファイル
 - `.claude/commands/task.md` - Claude Codeカスタムコマンド（`.claude/commands/`が存在する場合）
 - `.gitignore`の更新 - タスク関連ファイルを除外
+
+オプション:
+- `--hooks`: Claude Code のステータスラインと SessionStart フックも設定します
+  （後述の「ステータスライン & SessionStart フック」セクションを参照）
 
 **Git風のディレクトリ動作**: 
 - コマンドを実行すると、Claude Task ManagerはGitが`.git`を探すように、上位ディレクトリの`.claude-tasks`ディレクトリを検索します
@@ -124,6 +129,10 @@ claude-task status
 ```
 
 現在のタスク、アーカイブ数、実行回数、最後の実行時間を表示します。
+
+オプション:
+- `--short`: ステータスライン埋め込み用の1行出力。例: `認証機能の実装 ▸ 60%`
+  （サブタスクがない場合はタイトルのみ、タスクがない場合は `タスクなし`）
 
 ### 現在のタスクをアーカイブ
 
@@ -249,6 +258,39 @@ claude-task claude "コードをリファクタリングしてください"
 `.mcp.json` に `claude-task` エントリが既に存在する場合、init はそれを
 上書きしません。すべてのツールは CLI と同じ `TaskManager` を経由するため、
 両方のフロントエンドで動作が一貫します。
+
+### ステータスライン & SessionStart フック
+
+`claude-task init --hooks` を実行すると、現在のタスクが Claude Code に
+常時見えるようになります。以下の設定が `.claude/settings.json` にマージされます：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "claude-task status --short",
+    "padding": 1
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "claude-task status"
+      }
+    ]
+  }
+}
+```
+
+- **ステータスライン**: Claude Code のステータスバーに現在のタスクと進捗が
+  表示されます（例: `認証機能の実装 ▸ 60%`）。作業に合わせて更新されます。
+- **SessionStart フック**: フックの標準出力がコンテキストとして注入されるため、
+  新しいセッションは最初から現在のタスクを把握した状態で始まります。
+
+既存の設定は保護されます: 設定済みの `statusLine` は上書きせず、ユーザー独自の
+`SessionStart` フックも維持され、`init --hooks` を再実行してもエントリは
+重複しません。フラグを渡さない限り何も書き込まれず、破壊的な自動アクションは
+一切ありません（アーカイブは手動のままです）。
 
 ## ファイル構造
 
