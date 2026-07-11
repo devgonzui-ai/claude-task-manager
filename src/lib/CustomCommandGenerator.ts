@@ -191,6 +191,20 @@ out the steps yourself. \`claude-task run\` exists, but inside a Claude Code ses
 prefer reading \`@task.md\` directly and editing the relevant files. As you finish
 each subtask, mark it complete with \`claude-task done <n>\`.
 
+## task.md vs your in-session todo list
+
+\`task.md\` is the **persistent, cross-session source of truth**; your in-session
+todo list is an **ephemeral working mirror** of it. To keep them from conflicting:
+
+- When you start working on the current task, run \`claude-task progress\` and
+  seed your todo list from the unchecked subtasks (keep their numbering).
+- When you finish a subtask, persist it first with \`claude-task done <n>\`, then
+  check off the mirrored todo. Never update only the in-session list.
+- Add or reword subtasks by editing the checkboxes in \`task.md\` (or via
+  \`claude-task split\`), not only in the in-session list.
+- If the two ever disagree, \`task.md\` wins — re-seed your todo list from
+  \`claude-task progress\`.
+
 ## Notes
 
 - Quote titles that contain spaces.
@@ -226,8 +240,11 @@ The user ran: \`/task $ARGUMENTS\`
 Pass arguments through **verbatim** — never rewrite, reorder, or drop flags.
 
 - **run** (or no argument): do NOT shell out to \`claude-task run\`. Instead read
-  the current \`task.md\`, carry out the work yourself, and mark each subtask done
-  with \`claude-task done <n>\` as you finish it.
+  the current \`task.md\`, seed your in-session todo list from its unchecked
+  checkboxes, and carry out the work yourself. As you finish each subtask,
+  persist it with \`claude-task done <n>\` first, then check off the mirrored
+  todo. \`task.md\` is the source of truth — if it and your todo list disagree,
+  re-seed from \`claude-task progress\`.
 - **split**: run \`claude-task split $ARGUMENTS\`. It calls Claude in the
   background to generate subtasks, so it may take a moment — this is expected.
 - **everything else** (new / status / progress / done / history / archive): run

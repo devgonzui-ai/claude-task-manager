@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-04
+
+### Added
+- **Native todo reconciliation**: a documented, one-way sync between `task.md` (the persistent, cross-session source of truth) and Claude Code's ephemeral in-session todo list. The generated skill and `/task` slash command, the MCP `task_progress` / `task_done` tool descriptions, and the `claude-task run` prompt now all instruct Claude to seed its in-session todos from the unchecked subtasks, persist each completion with `claude-task done <n>` before checking off the mirror, and re-seed from `claude-task progress` on any disagreement — eliminating double management between the two layers.
+- README sections (en/ja) documenting the layer split.
+
+### Changed
+- The `claude-task run` prompt is now built by an exported `buildRunPrompt()` so tests assert against the exact string sent to the `claude` CLI.
+
 ## [1.4.0] - 2026-07-03
 
 ### Added

@@ -1,4 +1,5 @@
 import { TaskManager } from '../lib/TaskManager';
+import { buildRunPrompt } from '../lib/ClaudeExecutor';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
@@ -27,6 +28,15 @@ describe('Run Command Tests', () => {
     await fs.remove(tempDir);
   });
 
+  it('should instruct todo mirroring with task.md as source of truth', () => {
+    const prompt = buildRunPrompt('task.md');
+
+    expect(prompt).toContain('@task.md');
+    expect(prompt).toContain('mirror the unchecked checkboxes');
+    expect(prompt).toContain('claude-task done <n>');
+    expect(prompt).toContain('source of truth');
+  });
+
   it('should pass full prompt to claude command', async () => {
     // Mock spawn to capture arguments
     const mockProcess = {
@@ -52,7 +62,7 @@ describe('Run Command Tests', () => {
     const relativePath = path.relative(process.cwd(), path.resolve(tempDir, 'task.md'));
     expect(mockSpawn).toHaveBeenCalledWith(
       'claude',
-      ['--dangerously-skip-permissions', '--print', `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`],
+      ['--dangerously-skip-permissions', '--print', buildRunPrompt(relativePath)],
       {
         stdio: 'inherit',
         shell: false
@@ -80,7 +90,7 @@ describe('Run Command Tests', () => {
 
     // Verify the full prompt is passed as single argument
     const relativePath = path.relative(process.cwd(), path.resolve(dirWithSpaces, 'task.md'));
-    const expectedPrompt = `Please execute the tasks in @${relativePath} and then exit. Do not enter interactive mode.`;
+    const expectedPrompt = buildRunPrompt(relativePath);
     expect(mockSpawn).toHaveBeenCalledWith(
       'claude',
       ['--dangerously-skip-permissions', '--print', expectedPrompt],

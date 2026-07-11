@@ -92,6 +92,10 @@ describe('Claude Task CLI', () => {
       expect(command).toContain('argument-hint:');
       expect(command).toContain('allowed-tools:');
       expect(command).toContain('$ARGUMENTS');
+
+      // The run action seeds the in-session todo list from task.md subtasks.
+      expect(command).toContain('in-session todo list');
+      expect(command).toContain('source of truth');
     });
 
     it('should create a Claude Code skill when .claude exists', async () => {
@@ -108,6 +112,12 @@ describe('Claude Task CLI', () => {
       expect(skill).toMatch(/^---\n/);
       expect(skill).toContain('name: task');
       expect(skill).toContain('description:');
+
+      // Documents the task.md (persistent) vs in-session todo (ephemeral)
+      // split, with task.md as the source of truth.
+      expect(skill).toContain('in-session todo list');
+      expect(skill).toContain('source of truth');
+      expect(skill).toContain('claude-task done <n>');
     });
 
     it('should register the MCP server in .mcp.json when .claude exists', async () => {
