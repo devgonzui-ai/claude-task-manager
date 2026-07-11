@@ -40,9 +40,10 @@ export function buildPluginFiles(): PluginFiles {
     homepage: repoUrl,
     repository: repoUrl,
     license: pkg.license,
-    keywords: ['task', 'task-management', 'mcp', 'cli'],
-    hooks: './hooks/hooks.json',
-    mcpServers: './.mcp.json'
+    keywords: ['task', 'task-management', 'mcp', 'cli']
+    // hooks/hooks.json and .mcp.json are auto-loaded from their standard
+    // locations; referencing them from the manifest makes Claude Code load
+    // them twice and fail ("Duplicate hooks file detected").
   };
 
   const marketplaceManifest = {

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-07-12
+
+### Fixed
+- The plugin failed to load ("Duplicate hooks file detected") because `plugin.json` explicitly referenced `./hooks/hooks.json` and `./.mcp.json`, which Claude Code already auto-loads from their standard locations — so they were loaded twice. The manifest no longer references them; verified end-to-end with `/plugin marketplace add` + `/plugin install` on Claude Code 2.1.207.
+
 ## [1.6.0] - 2026-07-04
 
 ### Added
