@@ -18,6 +18,7 @@ A powerful task management extension for Claude Code that automates task trackin
 - 🔌 **MCP Server**: Exposes task management to Claude Code as schema-bound MCP tools via `.mcp.json`
 - 📟 **Statusline & Hooks**: Shows the current task in Claude Code's status line and injects it at session start (opt-in via `init --hooks`)
 - 🔄 **Todo Reconciliation**: `task.md` stays the persistent source of truth; Claude Code's in-session todo list mirrors it one way
+- 📦 **Plugin Packaging**: One-step install of the command + skill + hook + MCP server as a Claude Code plugin
 - 📈 **Progress Tracking**: Visual progress bar for subtask completion
 - 🤖 **AI Task Splitting**: Automatically break down tasks into subtasks using Claude
 
@@ -152,9 +153,38 @@ claude-task claude "Review and optimize the database schema"
 
 ## Claude Code Integration
 
-### Custom Command, Skill & MCP Server
-After running `claude-task init` in a project that has a `.claude/` directory,
-three integrations are generated automatically:
+### Plugin Installation (one step)
+
+The repository doubles as a Claude Code plugin marketplace. Inside Claude Code:
+
+```
+/plugin marketplace add devgonzui-ai/claude-task-manager
+/plugin install claude-task@gonzui-tools
+```
+
+The plugin bundles the `/task` slash command, the `task` skill, a
+`SessionStart` hook (injects the current task into every new session), and the
+MCP server (launched via `npx`, so no global npm install is required for it).
+
+Two things still need a local step:
+
+- The `claude-task` CLI itself (used by the command, skill, and hook) comes
+  from npm: `npm install -g @gonzui/claude-task-manager`, then run
+  `claude-task init` once per project to create `task.md` / `archive/`.
+- Claude Code does not let plugins set the status line, so for the statusline
+  either run `claude-task init --hooks` or add the `statusLine` entry from the
+  [Statusline & SessionStart Hook](#statusline--sessionstart-hook) section to
+  your settings yourself.
+
+The plugin package lives in [`plugin/`](plugin/) and is regenerated from the
+same sources as `init` (`npm run generate:plugin`), so both install paths
+always ship identical content — a test fails if they drift.
+
+### Custom Command, Skill & MCP Server (via `init`)
+
+If you prefer not to use the plugin, `claude-task init` wires up the same
+integrations per-project. After running it in a project that has a `.claude/`
+directory, three integrations are generated automatically:
 
 - A `/task` **slash command** at `.claude/commands/task.md`
 - A **Skill** at `.claude/skills/task/SKILL.md`, so newer Claude Code versions
