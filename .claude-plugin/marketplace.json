@@ -9,7 +9,7 @@
       "source": "./plugin",
       "displayName": "Claude Task Manager",
       "description": "Task management extension for Claude Code with archiving and history",
-      "version": "1.6.1",
+      "version": "1.6.2",
       "author": {
         "name": "gonzui"
       },
