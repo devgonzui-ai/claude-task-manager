@@ -53,9 +53,14 @@ export class TaskManager {
     this.taskSplitter = new TaskSplitter(this.config.taskFile, this.i18n);
 
     if (!this.i18n.isInitialized()) {
-      this.i18n.init('en').catch(() => {
+      // Synchronous on purpose: a fire-and-forget async init() here can
+      // resolve after a later init() for the configured language and
+      // overwrite its messages (flaky-English race on slow CI).
+      try {
+        this.i18n.initSync('en');
+      } catch {
         // Ignore initialization errors in constructor
-      });
+      }
     }
   }
 

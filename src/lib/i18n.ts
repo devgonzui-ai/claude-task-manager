@@ -52,12 +52,21 @@ export class I18n {
   }
 
   private async loadMessages(): Promise<void> {
-    const filePath = path.join(this.localesDir, `${this.currentLang}.json`);
+    const lang = this.currentLang;
+    const filePath = path.join(this.localesDir, `${lang}.json`);
     try {
-      this.messages = await fs.readJson(filePath);
+      const messages = await fs.readJson(filePath);
+      // Another init()/setLanguage() may have switched languages while this
+      // file was being read; a stale load must not clobber the newer messages.
+      if (this.currentLang === lang) {
+        this.messages = messages;
+      }
     } catch (error) {
+      if (this.currentLang !== lang) {
+        return;
+      }
       // Fallback to English if language file not found
-      if (this.currentLang !== 'en') {
+      if (lang !== 'en') {
         this.currentLang = 'en';
         await this.loadMessages();
       } else {
