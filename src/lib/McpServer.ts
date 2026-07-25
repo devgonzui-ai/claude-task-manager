@@ -43,18 +43,25 @@ export function createMcpServer(taskManager: TaskManager): McpServer {
     {
       title: 'Create a new task',
       description:
-        'Create a new task in task.md. The current task (if any) is archived first. Only one task is active at a time.',
+        'Create a new task in task.md. Without "name" the current task (if any) is archived and replaced. ' +
+        'With "name" the task is created alongside the current one and becomes active — nothing is archived.',
       inputSchema: {
         title: z.string().describe('Task title'),
         description: z.string().optional().describe('Task description'),
         priority: z.enum(['low', 'medium', 'high']).optional().describe('Task priority'),
-        tags: z.array(z.string()).optional().describe('Tags for the task')
+        tags: z.array(z.string()).optional().describe('Tags for the task'),
+        name: z
+          .string()
+          .optional()
+          .describe('Short handle to store the task under and switch to (no archiving of the current task)')
       }
     },
-    async ({ title, description, priority, tags }) => {
+    async ({ title, description, priority, tags, name }) => {
       try {
-        const filePath = await taskManager.createNewTask({ title, description, priority, tags });
-        return textResult(`Created task "${title}" at ${filePath}`);
+        const filePath = await taskManager.createNewTask({ title, description, priority, tags, name });
+        const activeName = await taskManager.getActiveTaskName();
+        const suffix = activeName ? ` (active task: ${activeName})` : '';
+        return textResult(`Created task "${title}" at ${filePath}${suffix}`);
       } catch (error) {
         return errorResult(error);
       }
@@ -198,6 +205,64 @@ export function createMcpServer(taskManager: TaskManager): McpServer {
           return textResult('No task to archive.');
         }
         return textResult(`Task archived: ${archivedPath}`);
+      } catch (error) {
+        return errorResult(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'task_switch',
+    {
+      title: 'Switch to another task',
+      description:
+        'Make the named task the active one (task.md). The current task is saved first, so its subtask state is preserved. ' +
+        'Use task_list to see available names. Set "create" to start a new task under that name instead of failing.',
+      inputSchema: {
+        name: z.string().describe('Name of the task to switch to'),
+        create: z.boolean().optional().describe('Create the task if no task with that name exists')
+      }
+    },
+    async ({ name, create }) => {
+      try {
+        const result = await taskManager.switchTask(name, { create });
+        if (result.created) {
+          return textResult(`Created and switched to task "${result.name}".`);
+        }
+        if (result.previous === result.name) {
+          return textResult(`Already on task "${result.name}".`);
+        }
+        return textResult(
+          `Switched to task "${result.name}"${result.previous ? ` (was "${result.previous}")` : ''}.`
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'task_list',
+    {
+      title: 'List tasks',
+      description:
+        'List every task with its name, title, and subtask progress. The active one is marked — its name is what task_switch expects.',
+      inputSchema: {}
+    },
+    async () => {
+      try {
+        const tasks = await taskManager.listTasks();
+        if (tasks.length === 0) {
+          return textResult('No tasks found.');
+        }
+        const lines = tasks.map((task) => {
+          const marker = task.active ? '*' : ' ';
+          const progress = task.total > 0
+            ? ` — ${task.completed}/${task.total} (${task.percentage}%)`
+            : '';
+          return `${marker} ${task.name}: ${task.title}${progress}`;
+        });
+        return textResult(lines.join('\n'));
       } catch (error) {
         return errorResult(error);
       }

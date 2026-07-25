@@ -8,6 +8,8 @@ export interface TaskConfig {
   defaultPrerequisites?: string | string[];
   defaultRules?: string | string[];
   defaultTasks?: string | string[];
+  /** Name of the active task in multi-task mode (see .claude-tasks/tasks/). */
+  activeTask?: string;
 }
 
 export interface TaskOptions {
@@ -18,6 +20,17 @@ export interface TaskOptions {
   prerequisites?: string;
   rules?: string;
   tasks?: string;
+  /** Create the task under this name and switch to it, without archiving. */
+  name?: string;
+}
+
+export interface TaskListItem {
+  name: string;
+  title: string;
+  active: boolean;
+  completed: number;
+  total: number;
+  percentage: number;
 }
 
 export interface TaskMetadata {
@@ -40,6 +53,8 @@ export interface TaskHistoryItem {
 }
 
 export interface TaskStatus {
+  /** Active task name in multi-task mode; absent in single-task mode. */
+  activeTaskName?: string | null;
   currentTask: string | null;
   archivedCount: number;
   lastRun: string | null;

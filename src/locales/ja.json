@@ -23,7 +23,8 @@
       "lastRun": "最後の実行: {{time}}",
       "noLastRun": "最後の実行: なし",
       "totalExecutions": "総実行回数: {{count}}",
-      "shortNoTask": "タスクなし"
+      "shortNoTask": "タスクなし",
+      "activeTask": "アクティブなタスク: {{name}}"
     },
     "run": {
       "description": "現在のタスクをClaude Codeで実行",
@@ -72,6 +73,19 @@
       "undone": "↩️  サブタスクを未完了に戻しました: {{numbers}}",
       "invalid": "⚠️  その番号のサブタスクはありません: {{numbers}}",
       "noNumbers": "❌ サブタスク番号を1つ以上指定してください。例: 'claude-task done 1 2'"
+    },
+    "switch": {
+      "description": "別の名前付きタスクに切り替え",
+      "success": "🔀 タスクを切り替えました: {{name}}",
+      "created": "✅ タスクを作成して切り替えました: {{name}}",
+      "already": "すでにこのタスクです: {{name}}",
+      "noName": "⚠️  タスク名を指定してください"
+    },
+    "list": {
+      "description": "すべてのタスクを一覧表示",
+      "title": "🗂  タスク一覧:",
+      "empty": "タスクがありません。`claude-task new` で作成してください。",
+      "hint": "`claude-task switch <name>` で切り替えられます。"
     }
   },
   "errors": {
@@ -81,7 +95,10 @@
     "archiveFailed": "現在のタスクのアーカイブに失敗しました: {{error}}",
     "historyFailed": "履歴の取得に失敗しました: {{error}}",
     "statusFailed": "ステータスの取得に失敗しました: {{error}}",
-    "configFailed": "設定の読み込みに失敗しました: {{error}}"
+    "configFailed": "設定の読み込みに失敗しました: {{error}}",
+    "unknownTask": "'{{name}}' というタスクはありません。`claude-task list` で確認するか、`claude-task switch {{name}} --create` で作成してください。",
+    "invalidTaskName": "タスク名が不正です: '{{name}}'。パス区切り文字を含まない名前を指定してください。",
+    "taskExists": "'{{name}}' というタスクはすでに存在します。`claude-task switch {{name}}` を使ってください。"
   },
   "taskTemplate": {
     "title": "# {{TITLE}}",

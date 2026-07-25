@@ -97,6 +97,26 @@ Options:
 
 **Note**: By default, Claude is executed with file edit permissions (`--dangerously-skip-permissions` flag) to allow complete task execution. Use `--no-edit-permission` if you want Claude to run in read-only mode.
 
+### Work on Several Tasks
+```bash
+claude-task new "API rework" --name api   # create alongside the current task
+claude-task list                          # list every task with its progress
+claude-task switch api                    # make another task the active one
+claude-task switch spike --create         # create it on the spot
+```
+
+One task is active at a time — it lives in `task.md`, exactly as before — but
+several **named** tasks can coexist under `.claude-tasks/tasks/<name>.md`:
+
+- `new --name <name>` creates a task **without archiving** the current one and
+  switches to it. Plain `new` keeps its classic behavior (archive and replace).
+- `switch <name>` saves the active task first, so nothing in progress is lost.
+- `list` marks the active task with `*` and shows `done/total` per task.
+- `status --short` (the statusline) becomes `[<name>] <title> ▸ <pct>%`.
+- Nothing changes until you use one of these commands: existing single-task
+  projects are migrated transparently the first time you create or switch to a
+  named task.
+
 ### View Task History
 ```bash
 claude-task history --limit 10

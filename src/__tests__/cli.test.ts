@@ -82,7 +82,7 @@ describe('Claude Task CLI', () => {
 
       // The slash command should document the full command set, in sync with the skill.
       const command = await fs.readFile(commandPath, 'utf8');
-      for (const action of ['new', 'status', 'run', 'history', 'archive', 'progress', 'done', 'split']) {
+      for (const action of ['new', 'list', 'switch', 'status', 'run', 'history', 'archive', 'progress', 'done', 'split']) {
         expect(command).toContain(`/task ${action}`);
       }
 

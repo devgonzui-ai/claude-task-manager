@@ -23,7 +23,8 @@
       "lastRun": "Last run: {{time}}",
       "noLastRun": "Last run: Never",
       "totalExecutions": "Total executions: {{count}}",
-      "shortNoTask": "No task"
+      "shortNoTask": "No task",
+      "activeTask": "Active task: {{name}}"
     },
     "run": {
       "description": "Run current task with Claude Code",
@@ -72,6 +73,19 @@
       "undone": "↩️  Unchecked subtask(s): {{numbers}}",
       "invalid": "⚠️  No subtask at number(s): {{numbers}}",
       "noNumbers": "❌ Please provide at least one subtask number, e.g. 'claude-task done 1 2'"
+    },
+    "switch": {
+      "description": "Switch to another named task",
+      "success": "🔀 Switched to task: {{name}}",
+      "created": "✅ Created and switched to task: {{name}}",
+      "already": "Already on task: {{name}}",
+      "noName": "⚠️  Please provide a task name"
+    },
+    "list": {
+      "description": "List all tasks",
+      "title": "🗂  Tasks:",
+      "empty": "No tasks found. Create one with `claude-task new`.",
+      "hint": "Switch with `claude-task switch <name>`."
     }
   },
   "errors": {
@@ -81,7 +95,10 @@
     "archiveFailed": "Failed to archive current task: {{error}}",
     "historyFailed": "Failed to get history: {{error}}",
     "statusFailed": "Failed to get status: {{error}}",
-    "configFailed": "Failed to read config: {{error}}"
+    "configFailed": "Failed to read config: {{error}}",
+    "unknownTask": "No task named '{{name}}'. Use `claude-task list` to see tasks, or `claude-task switch {{name}} --create` to create it.",
+    "invalidTaskName": "Invalid task name: '{{name}}'. Use a name without path separators.",
+    "taskExists": "A task named '{{name}}' already exists. Use `claude-task switch {{name}}` instead."
   },
   "taskTemplate": {
     "title": "# {{TITLE}}",

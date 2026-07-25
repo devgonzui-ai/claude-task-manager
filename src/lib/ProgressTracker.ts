@@ -15,6 +15,33 @@ export interface ProgressResult {
   title: string;
 }
 
+/**
+ * Parse task.md content into progress numbers. Standalone so callers that hold
+ * content rather than the active task file (e.g. TaskStore listing the stored
+ * tasks) reuse the exact same checkbox/title rules.
+ */
+export function parseProgressContent(content: string): ProgressResult {
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : 'Untitled Task';
+
+  const checkboxPattern = /^[\s]*-\s+\[([ xX])\]\s+(.+)$/gm;
+  const tasks: TaskItem[] = [];
+  let match;
+
+  while ((match = checkboxPattern.exec(content)) !== null) {
+    tasks.push({
+      completed: match[1].toLowerCase() === 'x',
+      text: match[2].trim()
+    });
+  }
+
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.completed).length;
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return { total, completed, percentage, tasks, title };
+}
+
 export class ProgressTracker {
   private taskFile: string;
   private i18n: I18n;
@@ -72,33 +99,7 @@ export class ProgressTracker {
   }
 
   private parseProgress(content: string): ProgressResult {
-    // Extract title
-    const titleMatch = content.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : 'Untitled Task';
-
-    // Find all checkbox items
-    const checkboxPattern = /^[\s]*-\s+\[([ xX])\]\s+(.+)$/gm;
-    const tasks: TaskItem[] = [];
-    let match;
-
-    while ((match = checkboxPattern.exec(content)) !== null) {
-      tasks.push({
-        completed: match[1].toLowerCase() === 'x',
-        text: match[2].trim()
-      });
-    }
-
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    return {
-      total,
-      completed,
-      percentage,
-      tasks,
-      title
-    };
+    return parseProgressContent(content);
   }
 
   formatProgressBar(percentage: number, width: number = 20): string {

@@ -68,21 +68,26 @@ program
   .option('-d, --description <description>', 'Task description')
   .option('-p, --priority <priority>', 'Task priority (low, medium, high)', 'medium')
   .option('--tags <tags>', 'Task tags (comma-separated)')
+  .option('-n, --name <name>', 'Create the task under this name and switch to it (does not archive the current task)')
   .action(async (title, options) => {
     try {
       const taskOptions: TaskOptions = {
         title: title || options.title,
         description: options.description,
         priority: options.priority as 'low' | 'medium' | 'high',
-        tags: options.tags ? options.tags.split(',').map((tag: string) => tag.trim()) : undefined
+        tags: options.tags ? options.tags.split(',').map((tag: string) => tag.trim()) : undefined,
+        name: options.name
       };
 
       const taskFile = await taskManager.createNewTask(taskOptions);
       console.log(chalk.green(i18n.t('commands.new.success', { title: taskOptions.title || 'New Task' })));
-      if (taskOptions.title) {
+      if (taskOptions.name) {
+        const activeName = await taskManager.getActiveTaskName();
+        console.log(chalk.blue(i18n.t('commands.status.activeTask', { name: chalk.yellow(activeName || taskOptions.name) })));
+      } else if (taskOptions.title) {
         console.log(chalk.blue(i18n.t('commands.new.archiving')));
       }
-      
+
       if (taskOptions.priority && taskOptions.priority !== 'medium') {
         console.log(chalk.yellow(`  Priority: ${taskOptions.priority.toUpperCase()}`));
       }
@@ -160,7 +165,10 @@ program
 
       const status = await taskManager.getStatus();
       console.log(chalk.blue(i18n.t('commands.status.title')));
-      console.log(status.currentTask 
+      if (status.activeTaskName) {
+        console.log(i18n.t('commands.status.activeTask', { name: chalk.yellow(status.activeTaskName) }));
+      }
+      console.log(status.currentTask
         ? i18n.t('commands.status.currentTask', { task: chalk.yellow(status.currentTask) })
         : i18n.t('commands.status.noCurrentTask'));
       
@@ -173,6 +181,60 @@ program
       console.log(status.lastRun 
         ? i18n.t('commands.status.lastRun', { time: chalk.gray(status.lastRun) })
         : i18n.t('commands.status.noLastRun'));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('switch <name>')
+  .description(i18n.t('commands.switch.description'))
+  .option('-c, --create', 'Create the task if it does not exist yet')
+  .action(async (name: string, options) => {
+    try {
+      const result = await taskManager.switchTask(name, { create: options.create });
+
+      if (result.created) {
+        console.log(chalk.green(i18n.t('commands.switch.created', { name: result.name })));
+      } else if (result.previous === result.name) {
+        console.log(chalk.yellow(i18n.t('commands.switch.already', { name: result.name })));
+      } else {
+        console.log(chalk.green(i18n.t('commands.switch.success', { name: result.name })));
+      }
+
+      console.log(chalk.gray(await taskManager.getShortStatus()));
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('list')
+  .alias('ls')
+  .description(i18n.t('commands.list.description'))
+  .action(async () => {
+    try {
+      const tasks = await taskManager.listTasks();
+
+      if (tasks.length === 0) {
+        console.log(chalk.yellow(i18n.t('commands.list.empty')));
+        return;
+      }
+
+      console.log(chalk.blue(i18n.t('commands.list.title')));
+      for (const task of tasks) {
+        const marker = task.active ? chalk.green('*') : ' ';
+        const name = task.active ? chalk.green(task.name) : task.name;
+        const progress = task.total > 0
+          ? chalk.gray(` — ${task.completed}/${task.total} (${task.percentage}%)`)
+          : '';
+        console.log(`${marker} ${name}: ${task.title}${progress}`);
+      }
+
+      if (tasks.length > 1) {
+        console.log('');
+        console.log(chalk.gray(i18n.t('commands.list.hint')));
+      }
     } catch (error) {
       handleError(error);
     }

@@ -1,7 +1,7 @@
 {
   "name": "claude-task",
   "displayName": "Claude Task Manager",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "description": "Task management extension for Claude Code with archiving and history",
   "author": {
     "name": "gonzui"

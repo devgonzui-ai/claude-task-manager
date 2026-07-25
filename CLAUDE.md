@@ -21,10 +21,13 @@ npm run generate:plugin  # Regenerate plugin/ + .claude-plugin/marketplace.json
 npm run dev -- init                    # Initialize project
 npm run dev -- init --hooks            # ...and wire CC statusline + SessionStart hook
 npm run dev -- new "Task name"         # Create new task
+npm run dev -- new "Task" --name api   # Create a named task without archiving, and switch to it
+npm run dev -- list                    # List all tasks (alias: ls)
+npm run dev -- switch api              # Switch the active task (--create to make it)
 npm run dev -- run                     # Execute current task
 npm run dev -- history                 # Show history
 npm run dev -- status                  # Check status
-npm run dev -- status --short          # One-line statusline output (<title> ▸ <pct>%)
+npm run dev -- status --short          # One-line statusline output ([<name>] <title> ▸ <pct>%)
 npm run dev -- progress                # Subtask progress bar
 npm run dev -- done 1 2                # Complete subtasks by number (--undo to uncheck)
 npm run dev -- split                   # AI-split task into subtasks
@@ -45,12 +48,13 @@ npm test -- --watch                    # Run tests in watch mode
 - `src/lib/TaskManager.ts`: Facade over the focused managers below; all task operations (CLI, MCP, plugin) route through it
 - `src/lib/ConfigManager.ts`: `.claude-tasks/config.json` handling + language detection
 - `src/lib/TaskFileManager.ts`: task.md CRUD and archiving
+- `src/lib/TaskStore.ts`: named tasks (`.claude-tasks/tasks/<name>.md`) — switching, listing, transparent migration from single-task mode
 - `src/lib/ClaudeExecutor.ts`: spawns the `claude` CLI for `run` (prompt built by exported `buildRunPrompt()`)
 - `src/lib/HistoryManager.ts`: archive history and status
 - `src/lib/CustomCommandGenerator.ts`: generates the `/task` command, `task` skill, `.mcp.json`, and (behind `init --hooks`) statusline + SessionStart hook config; exports the shared hook/statusline entry constants
 - `src/lib/ProgressTracker.ts`: subtask checkbox parsing, progress bar, `done` toggling
 - `src/lib/TaskSplitter.ts`: AI subtask splitting via the `claude` CLI
-- `src/lib/McpServer.ts`: MCP server exposing 7 zod-typed tools wrapping TaskManager
+- `src/lib/McpServer.ts`: MCP server exposing 9 zod-typed tools wrapping TaskManager
 - `src/lib/i18n.ts`: Internationalization system supporting English and Japanese
 - `src/types/index.ts`: TypeScript type definitions. Defines types like Task, TaskStatus, TaskPriority
 - `src/locales/`: Language files (en.json, ja.json) — keep key parity, `locales.test.ts` enforces it
@@ -61,11 +65,12 @@ npm test -- --watch                    # Run tests in watch mode
 
 ### Key Design Patterns
 1. **TaskManager facade**: central entry for all task operations; CLI, MCP server, and plugin all route through it so front-ends stay consistent
-2. **task.md file**: Stores tasks in Markdown format. Directly readable by Claude Code — the persistent, cross-session source of truth; Claude Code's in-session todo list is only an ephemeral mirror of it (seeded from `progress`, persisted via `done`)
-3. **Automatic archiving**: Old tasks are saved in `archive/` folder with timestamps
-4. **Claude Code integration surfaces**: `/task` slash command, `task` skill, MCP server (`.mcp.json`), opt-in statusline + SessionStart hook (`init --hooks`), and the plugin — all generated from `CustomCommandGenerator`, gated on `.claude/` existing (except `--hooks`, which is explicit)
-5. **Plugin/init no-drift rule**: the plugin bundles byte-identical command/skill content as `init`; after changing generated content, run `npm run generate:plugin` and commit, or `plugin.test.ts` fails
-6. **Internationalization**: Supports multiple languages (English/Japanese) with configurable language settings
+2. **Named tasks**: `task.md` is always the live file of the *active* task; `TaskStore` keeps per-name snapshots in `.claude-tasks/tasks/<name>.md` and the active name in `config.activeTask`. Multi-task mode is on iff that directory exists, so single-task projects are untouched until the first `new --name` / `switch` migrates them
+3. **task.md file**: Stores tasks in Markdown format. Directly readable by Claude Code — the persistent, cross-session source of truth; Claude Code's in-session todo list is only an ephemeral mirror of it (seeded from `progress`, persisted via `done`)
+4. **Automatic archiving**: Old tasks are saved in `archive/` folder with timestamps
+5. **Claude Code integration surfaces**: `/task` slash command, `task` skill, MCP server (`.mcp.json`), opt-in statusline + SessionStart hook (`init --hooks`), and the plugin — all generated from `CustomCommandGenerator`, gated on `.claude/` existing (except `--hooks`, which is explicit)
+6. **Plugin/init no-drift rule**: the plugin bundles byte-identical command/skill content as `init`; after changing generated content, run `npm run generate:plugin` and commit, or `plugin.test.ts` fails
+7. **Internationalization**: Supports multiple languages (English/Japanese) with configurable language settings
 
 ### Important Implementation Details
 - Uses TypeScript strict mode
@@ -81,6 +86,7 @@ When you run `claude-task init` in a project with a `.claude/` directory, `Custo
 
 - `/task new "task name"` - Create a new task
 - `/task status` - Check current task status
+- `/task list` / `/task switch <name>` - List tasks and switch the active one
 - `/task progress` / `/task done <n>` - Track and complete subtasks
 - `/task run` - Execute current task (uses task.md content as context)
 - `/task history` - Show task history
