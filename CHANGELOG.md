@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Stop hook is **not** bundled in the plugin. Plugin hooks cannot be enabled per user (only through admin-managed `enabledPlugins`), and this one writes to `task.md`, so it stays opt-in through `init --stop-hook`. `plugin.test.ts` passing without regeneration is the guard for that.
 - `--stop-hook` is a separate flag from `--hooks` and can be combined with it; `--hooks` behavior is unchanged.
 
+### Fixed
+- Latent test flake (seen on Node 18 CI): the archive-filename assertions rejected the `-N` collision suffix `TaskFileManager` legitimately appends when two tasks are archived within the same millisecond. Test-only change; archiving behavior is unchanged.
+
 ## [1.7.0] - 2026-07-25
 
 ### Added
