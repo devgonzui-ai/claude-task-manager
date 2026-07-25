@@ -7,7 +7,8 @@
       "skill": "✅ Created Claude Code skill at .claude/skills/task/SKILL.md",
       "mcpConfig": "✅ Registered claude-task MCP server in .mcp.json",
       "hooksConfig": "✅ Configured Claude Code statusline and SessionStart hook in .claude/settings.json",
-      "gitignoreUpdated": "✅ Updated .gitignore with task-related entries"
+      "gitignoreUpdated": "✅ Updated .gitignore with task-related entries",
+      "stopHookConfig": "✅ Configured Claude Code Stop hook (progress snapshots)"
     },
     "new": {
       "description": "Create a new task",
@@ -86,6 +87,11 @@
       "title": "🗂  Tasks:",
       "empty": "No tasks found. Create one with `claude-task new`.",
       "hint": "Switch with `claude-task switch <name>`."
+    },
+    "snapshot": {
+      "description": "Record current subtask progress into task.md",
+      "recorded": "📸 Snapshot recorded: {{line}}",
+      "unchanged": "No progress change since the last snapshot."
     }
   },
   "errors": {

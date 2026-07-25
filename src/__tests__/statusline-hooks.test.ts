@@ -140,4 +140,85 @@ describe('Claude Task CLI - status --short / init --hooks', () => {
       ]);
     });
   });
+
+  describe('init --stop-hook', () => {
+    it('should write only the Stop hook with the flag alone', async () => {
+      const result = await runCLI(['init', '--stop-hook'], tempDir);
+      expect(result.code).toBe(0);
+
+      const settings = await fs.readJson(settingsPath());
+      expect(settings.hooks.Stop).toEqual([
+        { type: 'command', command: 'claude-task snapshot --quiet' }
+      ]);
+      expect(settings.hooks.SessionStart).toBeUndefined();
+      expect(settings.statusLine).toBeUndefined();
+    });
+
+    it('should combine with --hooks', async () => {
+      await runCLI(['init', '--hooks', '--stop-hook'], tempDir);
+
+      const settings = await fs.readJson(settingsPath());
+      expect(settings.statusLine).toBeDefined();
+      expect(settings.hooks.SessionStart).toHaveLength(1);
+      expect(settings.hooks.Stop).toHaveLength(1);
+    });
+
+    it('should not duplicate the Stop hook when run twice', async () => {
+      await runCLI(['init', '--stop-hook'], tempDir);
+      await runCLI(['init', '--stop-hook'], tempDir);
+
+      const settings = await fs.readJson(settingsPath());
+      expect(settings.hooks.Stop).toHaveLength(1);
+    });
+
+    it('should keep existing user Stop hooks and append its own', async () => {
+      await fs.ensureDir(path.join(tempDir, '.claude'));
+      await fs.writeJson(settingsPath(), {
+        hooks: { Stop: [{ type: 'command', command: 'echo bye' }] }
+      });
+
+      await runCLI(['init', '--stop-hook'], tempDir);
+
+      const settings = await fs.readJson(settingsPath());
+      expect(settings.hooks.Stop).toEqual([
+        { type: 'command', command: 'echo bye' },
+        { type: 'command', command: 'claude-task snapshot --quiet' }
+      ]);
+    });
+
+    it('should not write settings.json without the flag', async () => {
+      expect(await fs.pathExists(settingsPath())).toBe(false);
+    });
+  });
+
+  describe('snapshot', () => {
+    it('should exit 0 and stay silent with --quiet when there is no task', async () => {
+      await fs.remove(path.join(tempDir, 'task.md'));
+
+      const result = await runCLI(['snapshot', '--quiet'], tempDir);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout.trim()).toBe('');
+    });
+
+    it('should exit 0 when the task has no subtasks', async () => {
+      await writeTask('# No subtasks here\n');
+
+      const result = await runCLI(['snapshot'], tempDir);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('No progress change');
+    });
+
+    it('should record progress and report it', async () => {
+      await writeTask('# Feature\n\n- [x] one\n- [ ] two\n');
+
+      const result = await runCLI(['snapshot'], tempDir);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('1/2 subtasks (50%)');
+      const content = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
+      expect(content).toContain('<!-- claude-task:snapshots -->');
+    });
+  });
 });

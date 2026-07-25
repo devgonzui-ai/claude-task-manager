@@ -52,9 +52,10 @@ program
   .command('init')
   .description(i18n.t('commands.init.description'))
   .option('--hooks', 'Configure Claude Code statusline and SessionStart hook in .claude/settings.json')
+  .option('--stop-hook', 'Configure a Claude Code Stop hook that records progress snapshots into task.md')
   .action(async (options) => {
     try {
-      await taskManager.init({ hooks: options.hooks });
+      await taskManager.init({ hooks: options.hooks, stopHook: options.stopHook });
       console.log(chalk.green(i18n.t('commands.init.success')));
       console.log(chalk.gray('  Created: task.md, archive/, .claude-tasks/'));
     } catch (error) {
@@ -360,6 +361,27 @@ program
     } catch (error) {
       handleError(error);
     }
+  });
+
+program
+  .command('snapshot')
+  .description(i18n.t('commands.snapshot.description'))
+  .option('-q, --quiet', 'Print nothing (used by the Stop hook)')
+  .action(async (options) => {
+    // Designed to run from a Claude Code Stop hook: a non-zero exit there is
+    // treated as an error (exit 2 even blocks Claude from stopping), so every
+    // path below exits 0 and nothing is ever thrown to handleError.
+    try {
+      const result = await taskManager.writeSnapshot();
+      if (!options.quiet) {
+        console.log(result.written
+          ? chalk.green(i18n.t('commands.snapshot.recorded', { line: result.line }))
+          : chalk.gray(i18n.t('commands.snapshot.unchanged')));
+      }
+    } catch {
+      // Deliberately silent: the hook must not disturb the session.
+    }
+    process.exit(0);
   });
 
 program

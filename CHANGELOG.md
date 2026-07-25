@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-07-26
+
+### Added
+- **Progress snapshots via an opt-in Stop hook.** `claude-task snapshot` records the current subtask progress into a managed block at the end of `task.md` (`<!-- claude-task:snapshots -->` … `<!-- /claude-task:snapshots -->`), and `claude-task init --stop-hook` wires it into Claude Code's `Stop` hook so a session leaves a visible trail without anyone asking.
+- New `SnapshotWriter` (`src/lib/SnapshotWriter.ts`) and `TaskManager.writeSnapshot()`, reusing the `parseProgressContent()` parser exported in v1.7.0.
+
+### Notes on the design
+- Claude Code's `Stop` hook fires **once per assistant turn**, not once per session (verified against the current hook docs on 2026-07-26), so `snapshot` writes only when the numbers changed and keeps at most the 10 most recent entries. Content outside the two markers is never parsed or rewritten.
+- `snapshot` always exits 0, on every failure path: a Stop hook exiting 2 would block Claude from stopping, and any other non-zero is reported as an error.
+- The Stop hook is **not** bundled in the plugin. Plugin hooks cannot be enabled per user (only through admin-managed `enabledPlugins`), and this one writes to `task.md`, so it stays opt-in through `init --stop-hook`. `plugin.test.ts` passing without regeneration is the guard for that.
+- `--stop-hook` is a separate flag from `--hooks` and can be combined with it; `--hooks` behavior is unchanged.
+
 ## [1.7.0] - 2026-07-25
 
 ### Added

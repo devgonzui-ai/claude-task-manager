@@ -135,6 +135,32 @@ claude-task switch spike --create      # 存在しなければその場で作成
 - これらのコマンドを使うまで挙動は一切変わりません。既存の単一タスク構成は、
   最初に名前付きタスクを作成／切り替えたタイミングで自動的に移行されます。
 
+### 進捗スナップショットの記録
+
+```bash
+claude-task snapshot            # 進捗が変わっていれば1行追記
+claude-task init --stop-hook    # Claude Code に自動で記録させる
+```
+
+`snapshot` は現在のサブタスク進捗を `task.md` 末尾の管理ブロックに記録します。
+
+```markdown
+<!-- claude-task:snapshots -->
+- 2026-07-26 14:03 — 3/5 subtasks (60%)
+- 2026-07-26 15:20 — 5/5 subtasks (100%)
+<!-- /claude-task:snapshots -->
+```
+
+`init --stop-hook` はこれを Claude Code の `Stop` フックに登録します。`Stop` は
+**アシスタントの応答ごと**に発火するため、`snapshot` は数値が変化したときだけ書き込み、
+最新10件のみを保持します。2つのマーカーの外側は一切変更せず、アーカイブもせず、
+常に exit 0 を返すので、Claude の停止を妨げることはありません。
+
+このフラグは `--hooks` とは独立していて併用できます
+（`claude-task init --hooks --stop-hook`）。プラグインには**意図的に含めていません**。
+プラグインのフックはユーザー個別に on/off できないうえ、これはタスクファイルへ
+書き込む処理のため、`init` でのオプトインに留めています。
+
 ### 履歴の確認
 
 ```bash

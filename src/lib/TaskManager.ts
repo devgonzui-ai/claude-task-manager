@@ -21,6 +21,7 @@ import { CustomCommandGenerator } from './CustomCommandGenerator';
 import { ProgressTracker, ProgressResult } from './ProgressTracker';
 import { TaskSplitter, SplitResult } from './TaskSplitter';
 import { TaskStore } from './TaskStore';
+import { SnapshotWriter, SnapshotResult } from './SnapshotWriter';
 
 export class TaskManager {
   private config: ClaudeTaskManagerConfig;
@@ -33,6 +34,7 @@ export class TaskManager {
   private progressTracker: ProgressTracker;
   private taskSplitter: TaskSplitter;
   private taskStore: TaskStore;
+  private snapshotWriter: SnapshotWriter;
 
   constructor(workingDir?: string) {
     const baseDir = workingDir || this.findProjectRoot() || process.cwd();
@@ -59,6 +61,7 @@ export class TaskManager {
       this.config.taskFile,
       this.i18n
     );
+    this.snapshotWriter = new SnapshotWriter(this.config.taskFile);
 
     if (!this.i18n.isInitialized()) {
       // Synchronous on purpose: a fire-and-forget async init() here can
@@ -104,7 +107,7 @@ export class TaskManager {
     return null;
   }
 
-  async init(options: { hooks?: boolean } = {}): Promise<void> {
+  async init(options: { hooks?: boolean; stopHook?: boolean } = {}): Promise<void> {
     try {
       await fs.ensureDir(this.config.archiveDir);
       await fs.ensureDir(this.config.configDir);
@@ -128,8 +131,11 @@ export class TaskManager {
       await this.customCommandGenerator.createClaudeCustomCommand();
       await this.customCommandGenerator.createClaudeSkill();
       await this.customCommandGenerator.createMcpConfig();
-      if (options.hooks) {
-        await this.customCommandGenerator.createHooksConfig();
+      if (options.hooks || options.stopHook) {
+        await this.customCommandGenerator.createHooksConfig({
+          ambient: options.hooks,
+          stop: options.stopHook
+        });
       }
       await this.updateGitignore();
     } catch (error) {
@@ -429,6 +435,19 @@ export class TaskManager {
     completed: boolean
   ): Promise<{ updated: number[]; invalid: number[]; result: ProgressResult }> {
     return await this.progressTracker.setCompletion(indices, completed);
+  }
+
+  /**
+   * Record the current subtask progress into task.md's snapshot block. Built
+   * for the opt-in Stop hook, so it never throws: a failure here must never
+   * keep Claude from stopping or damage the task file.
+   */
+  async writeSnapshot(): Promise<SnapshotResult> {
+    try {
+      return await this.snapshotWriter.write();
+    } catch {
+      return { written: false };
+    }
   }
 
   async splitTask(count?: number): Promise<SplitResult> {
