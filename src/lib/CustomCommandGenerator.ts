@@ -186,6 +186,9 @@ output back to the user.
 | Intent | Command |
 | --- | --- |
 | Create a task | \`claude-task new "<title>" [--priority high|medium|low] [--tags a,b]\` |
+| Create a task alongside the current one | \`claude-task new "<title>" --name <name>\` |
+| List all tasks | \`claude-task list\` |
+| Switch to another task | \`claude-task switch <name>\` (\`--create\` to start it) |
 | Show current task / counts | \`claude-task status\` |
 | Show subtask progress bar | \`claude-task progress\` |
 | Complete subtask(s) | \`claude-task done <n> [<n> ...]\` (use \`--undo\` to uncheck) |
@@ -218,14 +221,18 @@ todo list is an **ephemeral working mirror** of it. To keep them from conflictin
 
 - Quote titles that contain spaces.
 - Subtask numbers in \`done\` match the order shown by \`claude-task progress\`.
-- Only one task is active at a time; creating a new task archives the previous one.
+- One task is active at a time (\`task.md\`), but several named tasks can coexist:
+  \`new --name <name>\` starts one without archiving, \`switch <name>\` changes the
+  active one (state is saved on both sides), \`list\` shows them all.
+- \`new\` without \`--name\` keeps the classic behavior: it archives the current
+  task and replaces it, reusing the active name.
 `;
   }
 
   generateCustomCommandContent(): string {
     return `---
 description: Manage tasks with the claude-task CLI
-argument-hint: <new|status|progress|done|split|history|archive|run> [options]
+argument-hint: <new|list|switch|status|progress|done|split|history|archive|run> [options]
 allowed-tools: Bash(claude-task:*), Read, Edit
 ---
 
@@ -236,6 +243,9 @@ The user ran: \`/task $ARGUMENTS\`
 ## Actions
 
 - \`/task new "<title>" [--priority high|medium|low] [--tags a,b]\` — create a task
+  (archives the current one; add \`--name <name>\` to create it alongside instead)
+- \`/task list\` — list all tasks with their progress
+- \`/task switch <name>\` — make another task active (\`--create\` to start it)
 - \`/task status\` — show the current task and counts
 - \`/task progress\` — show the subtask progress bar
 - \`/task done <numbers...>\` — mark subtasks done (\`--undo\` to uncheck)
@@ -256,7 +266,8 @@ Pass arguments through **verbatim** — never rewrite, reorder, or drop flags.
   re-seed from \`claude-task progress\`.
 - **split**: run \`claude-task split $ARGUMENTS\`. It calls Claude in the
   background to generate subtasks, so it may take a moment — this is expected.
-- **everything else** (new / status / progress / done / history / archive): run
+- **everything else** (new / list / switch / status / progress / done / history /
+  archive): run
   \`claude-task $ARGUMENTS\` with the Bash tool and report the output to the user.
 
 Quote titles that contain spaces. Subtask numbers for \`done\` match the order

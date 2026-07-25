@@ -5,6 +5,7 @@ import {
   TaskConfig,
   TaskOptions,
   TaskHistoryItem,
+  TaskListItem,
   TaskStatus,
   ExecutionResult,
   ClaudeTaskManagerConfig,
@@ -19,6 +20,7 @@ import { HistoryManager } from './HistoryManager';
 import { CustomCommandGenerator } from './CustomCommandGenerator';
 import { ProgressTracker, ProgressResult } from './ProgressTracker';
 import { TaskSplitter, SplitResult } from './TaskSplitter';
+import { TaskStore } from './TaskStore';
 
 export class TaskManager {
   private config: ClaudeTaskManagerConfig;
@@ -30,6 +32,7 @@ export class TaskManager {
   private customCommandGenerator: CustomCommandGenerator;
   private progressTracker: ProgressTracker;
   private taskSplitter: TaskSplitter;
+  private taskStore: TaskStore;
 
   constructor(workingDir?: string) {
     const baseDir = workingDir || this.findProjectRoot() || process.cwd();
@@ -51,6 +54,11 @@ export class TaskManager {
     this.customCommandGenerator = new CustomCommandGenerator(this.config.workingDir, this.i18n);
     this.progressTracker = new ProgressTracker(this.config.taskFile, this.i18n);
     this.taskSplitter = new TaskSplitter(this.config.taskFile, this.i18n);
+    this.taskStore = new TaskStore(
+      path.join(this.config.configDir, 'tasks'),
+      this.config.taskFile,
+      this.i18n
+    );
 
     if (!this.i18n.isInitialized()) {
       // Synchronous on purpose: a fire-and-forget async init() here can
@@ -144,10 +152,6 @@ export class TaskManager {
         }
       }
 
-      if (await this.taskFileManager.taskFileExists()) {
-        await this.archiveCurrentTask();
-      }
-
       const config = await this.configManager.getConfig();
       const title =
         options.title ||
@@ -155,9 +159,51 @@ export class TaskManager {
         `Task ${format(new Date(), 'yyyy-MM-dd HH:mm')}`;
       const description = options.description || '';
 
+      if (options.name) {
+        // Named creation never archives: the previous task keeps living under
+        // its own name and is only written back to its snapshot.
+        const name = this.taskStore.sanitizeName(options.name);
+        const previous = await this.enableMultiTaskMode();
+
+        if (previous !== name && await this.taskStore.exists(name)) {
+          throw new TaskManagerError(
+            this.i18n.t('errors.taskExists', { name }),
+            'TASK_EXISTS'
+          );
+        }
+
+        if (previous && previous !== name) {
+          await this.taskStore.syncActive(previous);
+        }
+
+        await this.createTaskFile(title, description, options);
+        await this.taskStore.syncActive(name);
+        await this.setActiveTaskName(name);
+        return this.config.taskFile;
+      }
+
+      // Unnamed creation keeps the legacy behavior: archive the current task
+      // and replace it. In multi-task mode the active slot is reused, so the
+      // name stays valid for `switch` and `list`.
+      if (await this.taskFileManager.taskFileExists()) {
+        await this.taskFileManager.archiveCurrentTask();
+      }
+
       await this.createTaskFile(title, description, options);
+
+      if (await this.taskStore.isEnabled()) {
+        const active = await this.getActiveTaskName() || await this.taskStore.deriveName(title);
+        await this.taskStore.syncActive(active);
+        await this.setActiveTaskName(active);
+      }
+
       return this.config.taskFile;
     } catch (error) {
+      // Keep specific, actionable failures (e.g. a name clash) intact instead
+      // of flattening them into a generic create error.
+      if (error instanceof TaskManagerError) {
+        throw error;
+      }
       throw new TaskManagerError(
         this.i18n.t('errors.createTaskFailed', { error: error instanceof Error ? error.message : 'Unknown error' }),
         'CREATE_TASK_ERROR'
@@ -172,7 +218,124 @@ export class TaskManager {
   }
 
   async archiveCurrentTask(): Promise<string | null> {
-    return await this.taskFileManager.archiveCurrentTask();
+    const archivedPath = await this.taskFileManager.archiveCurrentTask();
+
+    if (archivedPath && await this.taskStore.isEnabled()) {
+      const active = await this.getActiveTaskName();
+      if (active) {
+        await this.taskStore.remove(active);
+        await this.setActiveTaskName(null);
+      }
+    }
+
+    return archivedPath;
+  }
+
+  /** Name of the active task, or null in single-task (legacy) mode. */
+  async getActiveTaskName(): Promise<string | null> {
+    if (!await this.taskStore.isEnabled()) {
+      return null;
+    }
+    const config = await this.configManager.getConfig();
+    return config.activeTask || null;
+  }
+
+  async isMultiTaskMode(): Promise<boolean> {
+    return await this.taskStore.isEnabled();
+  }
+
+  /**
+   * Turn on multi-task mode, migrating a legacy project transparently: the
+   * existing task.md becomes a stored task named after its title. Returns the
+   * active task name (null only when there is no task at all yet).
+   */
+  private async enableMultiTaskMode(): Promise<string | null> {
+    if (await this.taskStore.isEnabled()) {
+      return await this.getActiveTaskName();
+    }
+
+    await this.taskStore.enable();
+
+    if (!await this.taskFileManager.taskFileExists()) {
+      return null;
+    }
+
+    const progress = await this.progressTracker.getProgress();
+    const name = await this.taskStore.deriveName(progress.title);
+    await this.taskStore.syncActive(name);
+    await this.setActiveTaskName(name);
+    return name;
+  }
+
+  private async setActiveTaskName(name: string | null): Promise<void> {
+    await this.configManager.updateConfig(
+      { activeTask: name === null ? undefined : name },
+      () => this.taskFileManager.getDefaultTaskTemplate()
+    );
+  }
+
+  /**
+   * Make `name` the active task: the current task.md is written back to its own
+   * snapshot first, so no in-progress state is lost. With `create`, an unknown
+   * name is created from the task template instead of failing.
+   */
+  async switchTask(
+    name: string,
+    options: { create?: boolean } = {}
+  ): Promise<{ name: string; previous: string | null; created: boolean }> {
+    const target = this.taskStore.sanitizeName(name);
+    const previous = await this.enableMultiTaskMode();
+
+    if (previous === target) {
+      await this.taskStore.syncActive(target);
+      return { name: target, previous, created: false };
+    }
+
+    if (previous) {
+      await this.taskStore.syncActive(previous);
+    }
+
+    let created = false;
+    if (!await this.taskStore.exists(target)) {
+      if (!options.create) {
+        throw new TaskManagerError(
+          this.i18n.t('errors.unknownTask', { name: target }),
+          'UNKNOWN_TASK'
+        );
+      }
+      await this.createTaskFile(target, '');
+      await this.taskStore.syncActive(target);
+      created = true;
+    } else {
+      await this.taskStore.activate(target);
+    }
+
+    await this.setActiveTaskName(target);
+    return { name: target, previous, created };
+  }
+
+  /**
+   * All known tasks with their progress. In single-task mode this is the
+   * current task.md alone, listed under the name it would migrate to.
+   */
+  async listTasks(): Promise<TaskListItem[]> {
+    if (await this.taskStore.isEnabled()) {
+      return await this.taskStore.listTasks(await this.getActiveTaskName());
+    }
+
+    if (!await this.taskFileManager.taskFileExists()) {
+      return [];
+    }
+
+    const progress = await this.progressTracker.getProgress();
+    return [{
+      name: await this.taskStore.deriveName(progress.title),
+      title: progress.title,
+      active: true,
+      completed: progress.completed,
+      total: progress.total,
+      percentage: progress.percentage
+    }];
   }
 
   async runTask(verbose: boolean = false, debug: boolean = false, editPermission: boolean = true): Promise<ExecutionResult> {
@@ -195,7 +358,9 @@ export class TaskManager {
   }
 
   async getStatus(): Promise<TaskStatus> {
-    return await this.historyManager.getStatus();
+    const status = await this.historyManager.getStatus();
+    const activeTaskName = await this.getActiveTaskName();
+    return activeTaskName ? { ...status, activeTaskName } : status;
   }
 
   async getTaskContent(): Promise<string> {
@@ -239,17 +404,20 @@ export class TaskManager {
   /**
    * One-line status for embedding in a statusline (e.g. Claude Code's
    * `statusLine` setting): `<title> ▸ <pct>%`, title only when the task has
-   * no subtasks, or a localized "no task" marker.
+   * no subtasks, or a localized "no task" marker. In multi-task mode the
+   * active task name is prefixed as `[<name>]`.
    */
   async getShortStatus(): Promise<string> {
     if (!await this.taskFileManager.taskFileExists()) {
       return this.i18n.t('commands.status.shortNoTask');
     }
     const progress = await this.progressTracker.getProgress();
+    const activeTaskName = await this.getActiveTaskName();
+    const prefix = activeTaskName ? `[${activeTaskName}] ` : '';
     if (progress.total === 0) {
-      return progress.title;
+      return `${prefix}${progress.title}`;
     }
-    return `${progress.title} ▸ ${progress.percentage}%`;
+    return `${prefix}${progress.title} ▸ ${progress.percentage}%`;
   }
 
   formatProgress(result: ProgressResult): string {

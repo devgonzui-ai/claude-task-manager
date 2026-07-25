@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-07-25
+
+### Added
+- **Multiple named tasks and task switching.** A project can now hold several tasks side by side: `claude-task new "<title>" --name <name>` creates one *without* archiving the current task, `claude-task switch <name>` (with `--create`) changes the active task, and `claude-task list` (alias `ls`) shows every task with its subtask progress and marks the active one. Switching writes the active `task.md` back to its own store entry first, so in-progress subtask state is preserved on both sides.
+- New `TaskStore` (`src/lib/TaskStore.ts`) owning `.claude-tasks/tasks/<name>.md` snapshots. `task.md` stays the live file of the active task, so every existing manager keeps working unchanged; the active task name is recorded as `activeTask` in `.claude-tasks/config.json`. Copies rather than symlinks, for Windows.
+- MCP tools `task_switch` and `task_list`, plus an optional `name` argument on `task_new`, so Claude Code can manage parallel tasks without a Bash round-trip.
+- `claude-task status` now reports the active task name, and `status --short` (the statusline) prefixes it as `[<name>] <title> ▸ <pct>%` in multi-task mode.
+
+### Changed
+- The generated `/task` slash command, the `task` skill, and the bundled plugin document `list` / `switch` / `new --name` (regenerated via `npm run generate:plugin`).
+- `createNewTask()` no longer flattens actionable failures (e.g. a duplicate task name) into a generic create error — the specific error code is preserved.
+
+### Compatibility
+- Single-task projects are unaffected until they opt in: multi-task mode turns on the first time a named task is created or switched to, and that first use migrates the existing `task.md` into the store under a name derived from its title. No user action, no flag, no config edit.
+- `claude-task new` without `--name` keeps its classic behavior (archive the current task and replace it); in multi-task mode it reuses the active slot, so existing names stay valid.
+
 ## [1.6.2] - 2026-07-15
 
 ### Fixed

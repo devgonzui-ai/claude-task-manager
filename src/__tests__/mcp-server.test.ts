@@ -48,11 +48,47 @@ describe('claude-task MCP server', () => {
       'task_archive',
       'task_done',
       'task_history',
+      'task_list',
       'task_new',
       'task_progress',
       'task_split',
-      'task_status'
+      'task_status',
+      'task_switch'
     ]);
+  });
+
+  it('task_switch and task_list manage named tasks', async () => {
+    await client.callTool({
+      name: 'task_new',
+      arguments: { title: 'Feature A', name: 'feature-a' }
+    });
+    await client.callTool({
+      name: 'task_new',
+      arguments: { title: 'Feature B', name: 'feature-b' }
+    });
+
+    const listed = await client.callTool({ name: 'task_list', arguments: {} });
+    expect(resultText(listed)).toContain('feature-a: Feature A');
+    expect(resultText(listed)).toContain('* feature-b: Feature B');
+
+    const switched = await client.callTool({
+      name: 'task_switch',
+      arguments: { name: 'feature-a' }
+    });
+    expect(switched.isError).toBeFalsy();
+    expect(resultText(switched)).toContain('feature-a');
+
+    const taskContent = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');
+    expect(taskContent).toContain('Feature A');
+  });
+
+  it('task_switch reports an unknown task instead of creating it', async () => {
+    const result = await client.callTool({
+      name: 'task_switch',
+      arguments: { name: 'nope' }
+    });
+
+    expect(result.isError).toBe(true);
   });
 
   it('task_new creates task.md through TaskManager', async () => {

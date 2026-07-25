@@ -22,6 +22,9 @@ output back to the user.
 | Intent | Command |
 | --- | --- |
 | Create a task | `claude-task new "<title>" [--priority high|medium|low] [--tags a,b]` |
+| Create a task alongside the current one | `claude-task new "<title>" --name <name>` |
+| List all tasks | `claude-task list` |
+| Switch to another task | `claude-task switch <name>` (`--create` to start it) |
 | Show current task / counts | `claude-task status` |
 | Show subtask progress bar | `claude-task progress` |
 | Complete subtask(s) | `claude-task done <n> [<n> ...]` (use `--undo` to uncheck) |
@@ -54,4 +57,8 @@ todo list is an **ephemeral working mirror** of it. To keep them from conflictin
 
 - Quote titles that contain spaces.
 - Subtask numbers in `done` match the order shown by `claude-task progress`.
-- Only one task is active at a time; creating a new task archives the previous one.
+- One task is active at a time (`task.md`), but several named tasks can coexist:
+  `new --name <name>` starts one without archiving, `switch <name>` changes the
+  active one (state is saved on both sides), `list` shows them all.
+- `new` without `--name` keeps the classic behavior: it archives the current
+  task and replaces it, reusing the active name.
