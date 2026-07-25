@@ -20,6 +20,7 @@ npm run generate:plugin  # Regenerate plugin/ + .claude-plugin/marketplace.json
 ```bash
 npm run dev -- init                    # Initialize project
 npm run dev -- init --hooks            # ...and wire CC statusline + SessionStart hook
+npm run dev -- init --stop-hook        # ...and wire the opt-in Stop hook (progress snapshots)
 npm run dev -- new "Task name"         # Create new task
 npm run dev -- new "Task" --name api   # Create a named task without archiving, and switch to it
 npm run dev -- list                    # List all tasks (alias: ls)
@@ -30,6 +31,7 @@ npm run dev -- status                  # Check status
 npm run dev -- status --short          # One-line statusline output ([<name>] <title> ▸ <pct>%)
 npm run dev -- progress                # Subtask progress bar
 npm run dev -- done 1 2                # Complete subtasks by number (--undo to uncheck)
+npm run dev -- snapshot                # Record progress into task.md's snapshot block
 npm run dev -- split                   # AI-split task into subtasks
 npm run dev -- lang                    # Check/change language
 ```
@@ -51,7 +53,8 @@ npm test -- --watch                    # Run tests in watch mode
 - `src/lib/TaskStore.ts`: named tasks (`.claude-tasks/tasks/<name>.md`) — switching, listing, transparent migration from single-task mode
 - `src/lib/ClaudeExecutor.ts`: spawns the `claude` CLI for `run` (prompt built by exported `buildRunPrompt()`)
 - `src/lib/HistoryManager.ts`: archive history and status
-- `src/lib/CustomCommandGenerator.ts`: generates the `/task` command, `task` skill, `.mcp.json`, and (behind `init --hooks`) statusline + SessionStart hook config; exports the shared hook/statusline entry constants
+- `src/lib/CustomCommandGenerator.ts`: generates the `/task` command, `task` skill, `.mcp.json`, and (behind `init --hooks` / `init --stop-hook`) statusline + SessionStart + Stop hook config; exports the shared hook/statusline entry constants
+- `src/lib/SnapshotWriter.ts`: managed snapshot block in task.md (`snapshot` command / opt-in Stop hook) — change-driven, capped, never throws
 - `src/lib/ProgressTracker.ts`: subtask checkbox parsing, progress bar, `done` toggling
 - `src/lib/TaskSplitter.ts`: AI subtask splitting via the `claude` CLI
 - `src/lib/McpServer.ts`: MCP server exposing 9 zod-typed tools wrapping TaskManager
@@ -68,7 +71,7 @@ npm test -- --watch                    # Run tests in watch mode
 2. **Named tasks**: `task.md` is always the live file of the *active* task; `TaskStore` keeps per-name snapshots in `.claude-tasks/tasks/<name>.md` and the active name in `config.activeTask`. Multi-task mode is on iff that directory exists, so single-task projects are untouched until the first `new --name` / `switch` migrates them
 3. **task.md file**: Stores tasks in Markdown format. Directly readable by Claude Code — the persistent, cross-session source of truth; Claude Code's in-session todo list is only an ephemeral mirror of it (seeded from `progress`, persisted via `done`)
 4. **Automatic archiving**: Old tasks are saved in `archive/` folder with timestamps
-5. **Claude Code integration surfaces**: `/task` slash command, `task` skill, MCP server (`.mcp.json`), opt-in statusline + SessionStart hook (`init --hooks`), and the plugin — all generated from `CustomCommandGenerator`, gated on `.claude/` existing (except `--hooks`, which is explicit)
+5. **Claude Code integration surfaces**: `/task` slash command, `task` skill, MCP server (`.mcp.json`), opt-in statusline + SessionStart hook (`init --hooks`), opt-in Stop hook (`init --stop-hook`, init-only by design — plugin hooks can't be toggled per user), and the plugin — all generated from `CustomCommandGenerator`, gated on `.claude/` existing (except `--hooks`, which is explicit)
 6. **Plugin/init no-drift rule**: the plugin bundles byte-identical command/skill content as `init`; after changing generated content, run `npm run generate:plugin` and commit, or `plugin.test.ts` fails
 7. **Internationalization**: Supports multiple languages (English/Japanese) with configurable language settings
 

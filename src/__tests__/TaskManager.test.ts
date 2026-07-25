@@ -117,8 +117,10 @@ describe('TaskManager', () => {
       const archiveDir = path.join(tempDir, 'archive');
       const archiveFiles = await fs.readdir(archiveDir);
       expect(archiveFiles.length).toBe(2); // Initial task + First task were archived
-      expect(archiveFiles[0]).toMatch(/-\d{3}_task\.md$/);
-      expect(archiveFiles[1]).toMatch(/-\d{3}_task\.md$/);
+      // Two archives in the same millisecond get a `-N` collision suffix from
+      // TaskFileManager, so the timestamp may be followed by one.
+      expect(archiveFiles[0]).toMatch(/-\d{3}(-\d+)?_task\.md$/);
+      expect(archiveFiles[1]).toMatch(/-\d{3}(-\d+)?_task\.md$/);
 
       // Check that current task is the second one
       const currentContent = await fs.readFile(path.join(tempDir, 'task.md'), 'utf8');

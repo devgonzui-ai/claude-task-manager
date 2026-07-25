@@ -18,6 +18,16 @@ export const SESSION_START_HOOK_ENTRY = {
   command: 'claude-task status'
 } as const;
 
+/**
+ * Opt-in Stop hook (`init --stop-hook`). Deliberately NOT part of the plugin:
+ * plugin hooks cannot be toggled per user, and this one writes to task.md.
+ * `snapshot` always exits 0 so Claude is never blocked from stopping.
+ */
+export const STOP_HOOK_ENTRY = {
+  type: 'command',
+  command: 'claude-task snapshot --quiet'
+} as const;
+
 export class CustomCommandGenerator {
   private workingDir: string;
   private i18n: I18n;
@@ -117,7 +127,9 @@ export class CustomCommandGenerator {
    * a present `statusLine` is left untouched, and the hook is only appended
    * when no claude-task SessionStart hook exists yet.
    */
-  async createHooksConfig(): Promise<void> {
+  async createHooksConfig(
+    options: { ambient?: boolean; stop?: boolean } = { ambient: true }
+  ): Promise<void> {
     const claudeDir = path.join(this.workingDir, '.claude');
     const settingsPath = path.join(claudeDir, 'settings.json');
 
@@ -140,22 +152,37 @@ export class CustomCommandGenerator {
         settings = await fs.readJson(settingsPath);
       }
 
-      if (!settings.statusLine) {
-        settings.statusLine = { ...STATUS_LINE_ENTRY };
+      settings.hooks = settings.hooks || {};
+
+      const addHook = (event: string, entry: { type: string; command: string }) => {
+        const existing = settings.hooks![event] || [];
+        // One claude-task entry per event: any existing one (possibly
+        // customized by the user) is left as it is.
+        const alreadyHooked = existing.some(
+          (hook) => typeof hook.command === 'string' && hook.command.includes('claude-task')
+        );
+        if (!alreadyHooked) {
+          existing.push({ ...entry });
+          settings.hooks![event] = existing;
+        }
+      };
+
+      if (options.ambient) {
+        if (!settings.statusLine) {
+          settings.statusLine = { ...STATUS_LINE_ENTRY };
+        }
+        addHook('SessionStart', SESSION_START_HOOK_ENTRY);
       }
 
-      settings.hooks = settings.hooks || {};
-      const sessionStart = settings.hooks['SessionStart'] || [];
-      const alreadyHooked = sessionStart.some(
-        (entry) => typeof entry.command === 'string' && entry.command.includes('claude-task')
-      );
-      if (!alreadyHooked) {
-        sessionStart.push({ ...SESSION_START_HOOK_ENTRY });
-        settings.hooks['SessionStart'] = sessionStart;
+      if (options.stop) {
+        addHook('Stop', STOP_HOOK_ENTRY);
       }
 
       await fs.writeJson(settingsPath, settings, { spaces: 2 });
-      console.log(this.i18n.t('commands.init.hooksConfig'));
+      console.log(this.i18n.t(options.ambient ? 'commands.init.hooksConfig' : 'commands.init.stopHookConfig'));
+      if (options.ambient && options.stop) {
+        console.log(this.i18n.t('commands.init.stopHookConfig'));
+      }
     } catch (error) {
       console.warn('Could not update .claude/settings.json:', error);
     }

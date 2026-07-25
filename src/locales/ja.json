@@ -7,7 +7,8 @@
       "skill": "✅ Claude Code スキルを作成しました: .claude/skills/task/SKILL.md",
       "mcpConfig": "✅ .mcp.jsonにclaude-task MCPサーバーを登録しました",
       "hooksConfig": "✅ .claude/settings.jsonにClaude Codeのステータスラインと SessionStart フックを設定しました",
-      "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました"
+      "gitignoreUpdated": "✅ .gitignoreにタスク関連ファイルを追加しました",
+      "stopHookConfig": "✅ Claude Code の Stop フック（進捗スナップショット）を設定しました"
     },
     "new": {
       "description": "新しいタスクを作成",
@@ -86,6 +87,11 @@
       "title": "🗂  タスク一覧:",
       "empty": "タスクがありません。`claude-task new` で作成してください。",
       "hint": "`claude-task switch <name>` で切り替えられます。"
+    },
+    "snapshot": {
+      "description": "現在のサブタスク進捗を task.md に記録",
+      "recorded": "📸 スナップショットを記録しました: {{line}}",
+      "unchanged": "前回のスナップショットから進捗の変化はありません。"
     }
   },
   "errors": {

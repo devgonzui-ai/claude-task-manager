@@ -117,6 +117,33 @@ several **named** tasks can coexist under `.claude-tasks/tasks/<name>.md`:
   projects are migrated transparently the first time you create or switch to a
   named task.
 
+### Record Progress Snapshots
+```bash
+claude-task snapshot            # append one line if progress changed
+claude-task init --stop-hook    # let Claude Code do it automatically
+```
+
+`snapshot` records the current subtask progress in a managed block at the end
+of `task.md`:
+
+```markdown
+<!-- claude-task:snapshots -->
+- 2026-07-26 14:03 — 3/5 subtasks (60%)
+- 2026-07-26 15:20 — 5/5 subtasks (100%)
+<!-- /claude-task:snapshots -->
+```
+
+`init --stop-hook` wires it into Claude Code's `Stop` hook, so the trail is kept
+without anyone asking. That hook fires **once per assistant turn**, so
+`snapshot` only writes when the numbers actually changed and keeps the last 10
+entries. Nothing outside the two markers is ever touched, nothing is archived,
+and it always exits 0 — it can never block Claude from stopping.
+
+The flag is separate from `--hooks` and can be combined with it
+(`claude-task init --hooks --stop-hook`). It is deliberately **not** part of the
+plugin: plugin hooks cannot be toggled per user, and this one writes to your
+task file, so it stays opt-in through `init`.
+
 ### View Task History
 ```bash
 claude-task history --limit 10

@@ -233,7 +233,7 @@ describe('Claude Task CLI', () => {
       // Check archive directory - should have one more file than before
       const archiveFilesAfter = await fs.readdir(path.join(tempDir, 'archive'));
       expect(archiveFilesAfter.length).toBe(initialArchiveCount + 1);
-      expect(archiveFilesAfter[archiveFilesAfter.length - 1]).toMatch(/-\d{3}_task\.md$/);
+      expect(archiveFilesAfter[archiveFilesAfter.length - 1]).toMatch(/-\d{3}(-\d+)?_task\.md$/);
     });
   });
 
